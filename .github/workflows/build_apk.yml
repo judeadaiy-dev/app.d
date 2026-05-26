@@ -34,11 +34,11 @@ jobs:
       - name: Recreate Android platform files
         run: |
           flutter create . --platforms=android --project-name=chat_app
-
-      # 5. جلب الحزم والمكتبات المذكورة في pubspec.yaml
       - name: Install dependencies
         run: |
           flutter pub get
+          flutter pub upgrade --major-versions
+
 
       # 6. بناء نسخة الـ APK الاحترافية (Release)
       - name: Build APK
