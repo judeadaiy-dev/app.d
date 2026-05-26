@@ -11,15 +11,18 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # 1. جلب كود المشروع
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # 2. تثبيت الجافا
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
 
+      # 3. تثبيت بيئة فلاتر
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
@@ -27,26 +30,30 @@ jobs:
           channel: 'stable'
           cache: true
 
+      # 4. توليد ملفات أندرويد وتصفير الكاش مع ربط الحزمة باسمها الصحيح
       - name: Recreate Android platform files
         run: |
           flutter create . --platforms=android --project-name=chat_app
+          flutter pub get
 
+      # 5. تكوين إعدادات أندرويد لمنع انهيار مكاتب الـ SDK
       - name: Patch Android build configuration
         run: |
           echo "flutter.compileSdkVersion=34" >> android/local.properties
           echo "flutter.minSdkVersion=21" >> android/local.properties
           echo "flutter.targetSdkVersion=34" >> android/local.properties
 
-      # الخطوة الاحترافية: إجبار السيرفر على ربط واستكشاف كل الاستدعاءات المحلية تلقائياً
-      - name: Resolve and Repair Packages
+      # 6. الخطوة السحرية: إصلاح الاستدعاءات والمسميات القديمة برمجياً وتلقائياً
+      - name: Auto-fix Code Deprecations and Imports
         run: |
-          flutter pub get
-          flutter pub pub cache repair
+          dart fix --apply
 
+      # 7. بناء نسخة الـ APK
       - name: Build APK
         run: |
           flutter build apk --release --no-tree-shake-icons
-  
+
+      # 8. رفع الملف للتحميل مباشر إلى هاتفك
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
