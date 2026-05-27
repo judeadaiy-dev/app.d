@@ -25,18 +25,24 @@ jobs:
         with:
           flutter-version: '3.22.0'
           channel: 'stable'
-          cache: false # ❌ تم إيقاف الكاش لمنع التداخل مع الأسماء القديمة
+          cache: false
 
-      # تنظيف بيئة العمل لضمان قراءة ملف pubspec الجديد تماماً
-      - name: Clean and Reset Workspace
+      # خطوة ذكية: التأكد من تحويل أي استدعاء داخل ملفات الـ Dart إلى chat_app لمنع أخطاء المسارات
+      - name: Auto-Fix Package Imports to chat_app
         run: |
+          find lib/ -name "*.dart" -exec sed -i 's/package:dardashati\//package:chat_app\//g' {} +
+
+      # تنظيف كامل وحذف ملفات القفل القديمة إن وجدت لبدء بناء نظيف
+      - name: Hard Clean Workspace
+        run: |
+          rm -f pubspec.lock
           flutter pub cache clean --force
           flutter clean || true
 
-      # إعادة بناء منصة أندرويد بالاسم الجديد والمطابق بنسبة 100%
+      # إعادة بناء منصة أندرويد بالاسم الموحد المطلوب تماماً
       - name: Recreate Android platform files
         run: |
-          flutter create . --platforms=android --project-name=dardashati --org=com.judeadaiy
+          flutter create . --platforms=android --project-name=chat_app --org=com.judeadaiy
           flutter pub get
 
       - name: Add Permissions
@@ -55,7 +61,7 @@ jobs:
           APP_GRADLE="android/app/build.gradle"
           sed -i '/plugins {/a \    id "com.google.gms.google-services"' $APP_GRADLE
           
-          # 3. توليد الـ JSON القياسي باسم الحزمة الصحيح com.judeadaiy.dardashati
+          # 3. توليد الـ JSON القياسي مع اسم الحزمة المطابق com.judeadaiy.chat_app
           mkdir -p android/app
           echo '{
             "project_info": {
@@ -65,7 +71,7 @@ jobs:
             "client": [{
               "client_info": {
                 "mobilesdk_app_id": "1:123456789:android:abcdef",
-                "android_client_info": {"package_name": "com.judeadaiy.dardashati"}
+                "android_client_info": {"package_name": "com.judeadaiy.chat_app"}
               },
               "api_key": [{"current_key": "AIzaSyDummy-Key"}]
             }]
@@ -95,10 +101,9 @@ jobs:
           echo "flutter.minSdkVersion=21" >> android/local.properties
           echo "flutter.targetSdkVersion=34" >> android/local.properties
 
-      # حقن يدوي صريح لربط استدعاءات الكود باسم مشروعك الجديد بالكامل
       - name: Force Fix Package Resolution
         run: |
-          echo "dardashati:lib/" > .packages
+          echo "chat_app:lib/" > .packages
           dart fix --apply
 
       - name: Build Signed APK
@@ -108,6 +113,6 @@ jobs:
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Dardashati-Release-Signed-APK
+          name: SeaChat-Release-Signed-APK
           path: build/app/outputs/flutter-apk/app-release.apk
 
