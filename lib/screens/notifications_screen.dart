@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../widgets/glass_container.dart';
 import '../utils/supabase_client.dart';
-
+import 'package:chat_app/theme/app_colors.dart';
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
 
