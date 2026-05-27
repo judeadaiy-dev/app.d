@@ -1,85 +1,68 @@
 import 'package:flutter/material.dart';
-import '../utils/supabase_client.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class OnlineProvider extends ChangeNotifier {
-  final Map<String, bool> _onlineStatus = {};
-  final Map<String, String> _lastSeen = {};
+  final SupabaseClient supabase = Supabase.instance.client;
+  RealtimeChannel? _channel;
+  final Map<String, bool> _onlineUsers = {};
 
-  Map<String, bool> get onlineStatus => _onlineStatus;
-  Map<String, String> get lastSeen => _lastSeen;
-
-  OnlineProvider();
-
-  void updateUserStatus(String userId, bool isOnline, String? lastSeenAt) {
-    _onlineStatus[userId] = isOnline;
-    if (lastSeenAt!= null) {
-      _lastSeen[userId] = lastSeenAt;
-    }
-    notifyListeners();
-  }
+  Map<String, bool> get onlineUsers => _onlineUsers;
 
   bool isUserOnline(String userId) {
-    return _onlineStatus[userId]?? false;
+    return _onlineUsers[userId]?? false;
   }
 
-  String? getLastSeen(String userId) {
-    return _lastSeen[userId];
-  }
+  void initPresence() {
+    final currentUserId = supabase.auth.currentUser?.id;
+    if (currentUserId == null) return;
 
-  Future<void> updateMyStatus(bool isOnline) async {
-    final user = supabase.auth.currentUser;
-    if (user == null) return;
+    _channel = supabase.channel('online_users');
 
-    try {
-      await supabase.from('profiles').update({
-        'last_seen_at': DateTime.now().toIso8601String(),
-      }).eq('id', user.id);
-
-      // Presence channel
-      final channel = supabase.channel('online-users');
-      if (isOnline) {
-        channel.subscribe((status, error) {
-          if (status == RealtimeSubscribeStatus.subscribed) {
-            channel.track({'user_id': user.id, 'online_at': DateTime.now().toIso8601String()});
-          }
-        });
-      } else {
-        await channel.untrack();
-      }
-    } catch (e) {
-      print('Error updating online status: $e');
-    }
-  }
-
-  void listenToPresence() {
-    final channel = supabase.channel('online-users');
-
-    channel
+    _channel!
        .onPresenceSync((payload) {
-          final presences = channel.presenceState();
-          _onlineStatus.clear();
-          for (var presence in presences) {
-            final userId = presence.payload['user_id'];
+          final newState = _channel!.presenceState();
+          _onlineUsers.clear();
+          
+          for (final presence in newState) {
+            final userId = presence.presenceData['user_id'] as String?;
             if (userId!= null) {
-              _onlineStatus[userId] = true;
+              _onlineUsers[userId] = true;
             }
           }
           notifyListeners();
         })
        .onPresenceJoin((payload) {
-          final userId = payload.newPresences.first.payload['user_id'];
+          final userId = payload.presenceData['user_id'] as String?;
           if (userId!= null) {
-            _onlineStatus[userId] = true;
+            _onlineUsers[userId] = true;
             notifyListeners();
           }
         })
        .onPresenceLeave((payload) {
-          final userId = payload.leftPresences.first.payload['user_id'];
+          final userId = payload.presenceData['user_id'] as String?;
           if (userId!= null) {
-            _onlineStatus[userId] = false;
+            _onlineUsers[userId] = false;
             notifyListeners();
           }
         })
-       .subscribe();
+       .subscribe((status, error) async {
+          if (status == RealtimeChannelStates.joined) {
+            await _channel!.track({
+              'user_id': currentUserId,
+              'online_at': DateTime.now().toIso8601String(),
+            });
+          }
+        });
+  }
+
+  void disposePresence() {
+    _channel?.unsubscribe();
+    _channel = null;
+  }
+
+  @override
+  void dispose() {
+    disposePresence();
+    super.dispose();
   }
 }
