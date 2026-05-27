@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/app_settings_provider.dart';
 import '../widgets/glass_container.dart';
-import '../theme/app_theme.dart';
 import '../utils/supabase_client.dart';
 
 class AdminScreen extends StatefulWidget {
@@ -79,10 +78,10 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
   Future<void> _loadUsers() async {
     try {
       final res = await supabase
-         .from('profiles')
-         .select('id, username, role, created_at, avatar_url')
-         .order('created_at', ascending: false)
-         .limit(50);
+        .from('profiles')
+        .select('id, username, role, created_at, avatar_url')
+        .order('created_at', ascending: false)
+        .limit(50);
 
       setState(() => _users = (res as List).cast<Map<String, dynamic>>());
     } catch (e) {
@@ -92,8 +91,8 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
 
   void _loadSettings() {
     final settings = context.read<AppSettingsProvider>().settings;
-    _appNameController.text = settings.appName;
-    _logoUrlController.text = settings.appLogoUrl;
+    _appNameController.text = settings?.appName?? '';
+    _logoUrlController.text = settings?.appLogoUrl?? '';
   }
 
   Future<void> _saveSettings() async {
@@ -135,9 +134,9 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
 
     try {
       await supabase
-         .from('profiles')
-         .update({'role': newRole})
-         .eq('id', userId);
+        .from('profiles')
+        .update({'role': newRole})
+        .eq('id', userId);
 
       _loadUsers();
 
@@ -283,10 +282,10 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
                   CircleAvatar(
                     radius: 24,
                     backgroundImage: user['avatar_url']!= null
-                       ? NetworkImage(user['avatar_url'])
+                      ? NetworkImage(user['avatar_url'])
                         : null,
                     child: user['avatar_url'] == null
-                       ? const Icon(Icons.person_rounded)
+                      ? const Icon(Icons.person_rounded)
                         : null,
                   ),
                   const SizedBox(width: 12),
@@ -396,7 +395,7 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
                   child: ElevatedButton(
                     onPressed: _saving? null : _saveSettings,
                     child: _saving
-                       ? const SizedBox(
+                      ? const SizedBox(
                             width: 20,
                             height: 20,
                             child: CircularProgressIndicator(strokeWidth: 2),
