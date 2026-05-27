@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:chat_app/providers/chat_provider.dart';
-import 'package:chat_app/widgets/glass_container.dart';
-import 'package:chat_app/widgets/room_tile.dart';
 import 'package:chat_app/theme/app_colors.dart';
+import 'package:chat_app/widgets/room_tile.dart';
+import 'package:chat_app/widgets/glass_container.dart';
+import 'package:chat_app/providers/online_provider.dart';
+import 'package:provider/provider.dart';
+
 class ChatListScreen extends StatefulWidget {
   const ChatListScreen({super.key});
 
@@ -13,63 +14,121 @@ class ChatListScreen extends StatefulWidget {
 }
 
 class _ChatListScreenState extends State<ChatListScreen> {
+  final SupabaseClient supabase = Supabase.instance.client;
+  List<Map<String, dynamic>> rooms = [];
+  bool isLoading = true;
+
   @override
   void initState() {
     super.initState();
-    _initRealtime();
+    _loadRooms();
   }
 
-  void _initRealtime() {
-    final chatProvider = context.read<ChatProvider>();
-    final supabase = Supabase.instance.client;
+  Future<void> _loadRooms() async {
+    try {
+      final userId = supabase.auth.currentUser?.id;
+      if (userId == null) return;
 
-    supabase
-       .channel('public:messages')
-       .onPostgresChanges(
-          event: PostgresChangeEvent.all,
-          schema: 'public',
-          table: 'messages',
-          callback: (payload) {
-            chatProvider.fetchRooms();
-          },
-        )
-       .subscribe();
+      final response = await supabase
+          .from('chat_rooms')
+          .select('*, room_members!inner(user_id)')
+          .eq('room_members.user_id', userId)
+          .order('updated_at', ascending: false);
+
+      setState(() {
+        rooms = List<Map<String, dynamic>>.from(response);
+        isLoading = false;
+      });
+    } catch (e) {
+      setState(() => isLoading = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('خطأ في تحميل الغرف: $e')),
+        );
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final onlineProvider = Provider.of<OnlineProvider>(context);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('المحادثات'),
-        centerTitle: true,
-      ),
-      body: Consumer<ChatProvider>(
-        builder: (context, chatProvider, _) {
-          if (chatProvider.isLoading) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          if (chatProvider.rooms.isEmpty) {
-            return const Center(
-              child: Text('لا توجد محادثات بعد'),
-            );
-          }
-
-          return ListView.builder(
-            itemCount: chatProvider.rooms.length,
-            itemBuilder: (context, index) {
-              final room = chatProvider.rooms[index];
-              return GlassContainer(
-                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                child: RoomTile(room: room),
-              );
+        backgroundColor: AppColors.primary,
+        foregroundColor: AppColors.primaryForeground,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.search),
+            onPressed: () {
+              Navigator.pushNamed(context, '/search');
             },
-          );
-        },
+          ),
+          IconButton(
+            icon: const Icon(Icons.settings),
+            onPressed: () {
+              Navigator.pushNamed(context, '/settings');
+            },
+          ),
+        ],
       ),
+      body: isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : rooms.isEmpty
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.chat_bubble_outline,
+                          size: 80, color: Colors.grey[400]),
+                      const SizedBox(height: 16),
+                      Text(
+                        'لا توجد محادثات بعد',
+                        style: TextStyle(
+                          fontSize: 18,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              : RefreshIndicator(
+                  onRefresh: _loadRooms,
+                  child: ListView.builder(
+                    padding: const EdgeInsets.all(8),
+                    itemCount: rooms.length,
+                    itemBuilder: (context, index) {
+                      final room = rooms[index];
+                      final roomId = room['id'];
+                      final isOnline = onlineProvider.isUserOnline(roomId);
+                      
+                      return GlassContainer(
+                        margin: const EdgeInsets.only(bottom: 8),
+                        onTap: () {
+                          Navigator.pushNamed(
+                            context,
+                            '/chat',
+                            arguments: {'roomId': roomId},
+                          );
+                        },
+                        child: RoomTile(
+                          room: {
+                            ...room,
+                            'is_online': isOnline,
+                          },
+                        ),
+                      );
+                    },
+                  ),
+                ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => Navigator.pushNamed(context, '/rooms'),
-        child: const Icon(Icons.add),
+        backgroundColor: AppColors.primary,
+        onPressed: () {
+          // انشاء غرفة جديدة
+          Navigator.pushNamed(context, '/search');
+        },
+        child: const Icon(Icons.add, color: Colors.white),
       ),
     );
   }
