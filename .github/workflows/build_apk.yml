@@ -27,19 +27,21 @@ jobs:
           channel: 'stable'
           cache: false
 
-      # إنشاء ملفات المنصة القياسية النظيفة دون المساس بأكوادك
+      # توليد ملفات منصة الأندرويد القياسية المتوافقة مع كودك
       - name: Recreate Android platform files
         run: |
           flutter create . --platforms=android --project-name=chat_app --org=com.judeadaiy
           flutter pub get
 
-      - name: Add Permissions
+      # إضافة الصلاحيات اللازمة للتطبيق داخل الـ Manifest تلقائياً
+      - name: Add Permissions to AndroidManifest
         run: |
           MANIFEST="android/app/src/main/AndroidManifest.xml"
           sed -i '/<\/manifest>/i \    <uses-permission android:name="android.permission.INTERNET"/>\n    <uses-permission android:name="android.permission.RECORD_AUDIO"/>\n    <uses-permission android:name="android.permission.CAMERA"/>\n    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>\n    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS"/>' $MANIFEST
           sed -i 's/<application/<application android:usesCleartextTraffic="true"/g' $MANIFEST
 
-      - name: Setup Google Services
+      # تهيئة إعدادات حزمة Google Services لبناء التطبيق بسلاسة
+      - name: Setup Google Services Configuration
         run: |
           SETTINGS_GRADLE="android/settings.gradle"
           sed -i '/plugins {/a \    id "com.google.gms.google-services" version "4.4.1" apply false' $SETTINGS_GRADLE
@@ -62,6 +64,7 @@ jobs:
             }]
           }' > android/app/google-services.json
 
+      # إنشاء مفتاح توقيع (Keystore) مؤقت لتوقيع نسخة الـ Release
       - name: Create Keystore and Sign App
         run: |
           keytool -genkey -v -keystore android/app/upload-keystore.jks -keyalg RSA -keysize 2048 -validity 10000 -alias upload \
@@ -80,16 +83,19 @@ jobs:
           
           sed -i 's/signingConfig signingConfigs.debug/signingConfig signingConfigs.release/g' $APP_GRADLE
 
+      # ضبط إصدارات الـ SDK المطلوبة للأندرويد
       - name: Patch Android build configuration
         run: |
           echo "flutter.compileSdkVersion=34" >> android/local.properties
           echo "flutter.minSdkVersion=21" >> android/local.properties
           echo "flutter.targetSdkVersion=34" >> android/local.properties
 
+      # أمر البناء الفعلي الموجه للأندرويد حصراً لتفادي مشاكل الحزم الأخرى
       - name: Build Signed APK
         run: |
-          flutter build apk --release --no-tree-shake-icons
+          flutter build apk --release --no-tree-shake-icons --target-platform android-arm,android-arm64,android-x64
 
+      # رفع ملف الـ APK النهائي لتتمكن من تحميله مباشرة من جيت هاب
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
