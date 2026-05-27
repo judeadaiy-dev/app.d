@@ -40,8 +40,8 @@ dependencies:
   # Permissions - للمايك والكاميرا والتخزين
   permission_handler: ^11.3.1
   
-  # Audio Recording - تم تخصيصها للأندرويد فقط لتفادي خطأ RecordLinux
-  record_android: ^5.1.2
+    # ضع هذا السطر بدلاً منه:
+  record_android: ^1.3.3
   
   # Audio Player - تشغيل الرسائل الصوتية
   just_audio: ^0.9.39
