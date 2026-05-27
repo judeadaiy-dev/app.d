@@ -1,67 +1,79 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-class AppSettingsProvider extends ChangeNotifier {
-  final supabase = Supabase.instance.client;
-  
-  String _appName = 'تطبيق المحادثة';
-  String _appLogoUrl = '';
-  String _chatBackgroundUrl = '';
-  bool _isLoading = true;
+class AppSettings {
+  final bool maintenanceMode;
+  final String appVersion;
+  final String welcomeMessage;
+  final bool allowRegistration;
 
-  String get appName => _appName;
-  String get appLogoUrl => _appLogoUrl;
-  String get chatBackgroundUrl => _chatBackgroundUrl;
-  bool get isLoading => _isLoading;
+  AppSettings({
+    required this.maintenanceMode,
+    required this.appVersion,
+    required this.welcomeMessage,
+    required this.allowRegistration,
+  });
 
-  AppSettingsProvider() {
-    fetchSettings();
-    _listenToChanges();
+  factory AppSettings.fromJson(Map<String, dynamic> json) {
+    return AppSettings(
+      maintenanceMode: json['maintenance_mode']?? false,
+      appVersion: json['app_version']?? '1.0.0',
+      welcomeMessage: json['welcome_message']?? 'مرحبا بك',
+      allowRegistration: json['allow_registration']?? true,
+    );
   }
 
-  Future<void> fetchSettings() async {
-    try {
-      final response = await supabase
-         .from('app_settings')
-         .select()
-         .eq('id', 1)
-         .single();
+  Map<String, dynamic> toJson() {
+    return {
+      'maintenance_mode': maintenanceMode,
+      'app_version': appVersion,
+      'welcome_message': welcomeMessage,
+      'allow_registration': allowRegistration,
+    };
+  }
+}
 
-      _appName = response['app_name']?? 'تطبيق المحادثة';
-      _appLogoUrl = response['app_logo_url']?? '';
-      _chatBackgroundUrl = response['chat_background_url']?? '';
-      _isLoading = false;
+class AppSettingsProvider extends ChangeNotifier {
+  final SupabaseClient supabase = Supabase.instance.client;
+  AppSettings? settings; // تم التأكد من الاسم settings
+  bool isLoading = false;
+
+  // الدالة loadSettings موجودة
+  Future<void> loadSettings() async {
+    try {
+      isLoading = true;
+      notifyListeners();
+
+      final response = await supabase
+        .from('app_settings')
+        .select()
+        .single();
+
+      settings = AppSettings.fromJson(response);
+      isLoading = false;
       notifyListeners();
     } catch (e) {
-      _isLoading = false;
+      // اذا ما لقى جدول، يستخدم القيم الافتراضية
+      settings = AppSettings(
+        maintenanceMode: false,
+        appVersion: '1.0.0',
+        welcomeMessage: 'مرحبا بك في التطبيق',
+        allowRegistration: true,
+      );
+      isLoading = false;
       notifyListeners();
+      debugPrint('Error loading settings: $e');
     }
   }
 
-  void _listenToChanges() {
-    supabase
-       .channel('public:app_settings')
-       .onPostgresChanges(
-          event: PostgresChangeEvent.update,
-          schema: 'public',
-          table: 'app_settings',
-          callback: (payload) {
-            fetchSettings();
-          },
-        )
-       .subscribe();
-  }
-
-  Future<void> updateSettings({
-    String? appName,
-    String? appLogoUrl,
-    String? chatBackgroundUrl,
-  }) async {
-    await supabase.from('app_settings').update({
-      if (appName!= null) 'app_name': appName,
-      if (appLogoUrl!= null) 'app_logo_url': appLogoUrl,
-      if (chatBackgroundUrl!= null) 'chat_background_url': chatBackgroundUrl,
-      'updated_at': DateTime.now().toIso8601String(),
-    }).eq('id', 1);
+  Future<void> updateSettings(AppSettings newSettings) async {
+    try {
+      await supabase.from('app_settings').upsert(newSettings.toJson());
+      settings = newSettings;
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Error updating settings: $e');
+      rethrow;
+    }
   }
 }
