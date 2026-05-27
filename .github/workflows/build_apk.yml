@@ -27,9 +27,10 @@ jobs:
           channel: 'stable'
           cache: true
 
+      # تم تعديل اسم المشروع هنا إلى dardashati ليتوافق مع الـ pubspec.yaml الخاص بك
       - name: Recreate Android platform files
         run: |
-          flutter create . --platforms=android --project-name=chat_app --org=com.judeadaiy
+          flutter create . --platforms=android --project-name=dardashati --org=com.judeadaiy
           flutter pub get
 
       - name: Add Permissions
@@ -38,18 +39,17 @@ jobs:
           sed -i '/<\/manifest>/i \    <uses-permission android:name="android.permission.INTERNET"/>\n    <uses-permission android:name="android.permission.RECORD_AUDIO"/>\n    <uses-permission android:name="android.permission.CAMERA"/>\n    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>\n    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS"/>' $MANIFEST
           sed -i 's/<application/<application android:usesCleartextTraffic="true"/g' $MANIFEST
 
-      # 6. إعداد الجوجل بالطريقة الحديثة المتوافقة مع هياكل الجرادل الجديدة (Plugins Block)
       - name: Setup Google Services
         run: |
-          # أولاً: إضافة تعريف البلاجن في ملف android/settings.gradle السحابي (النظام الحديث لفلاتر)
+          # إضافة تعريف البلاجن في settings.gradle الحديث
           SETTINGS_GRADLE="android/settings.gradle"
           sed -i '/plugins {/a \    id "com.google.gms.google-services" version "4.4.1" apply false' $SETTINGS_GRADLE
           
-          # ثانياً: تطبيق البلاجن في ملف أندرويد الفرعي للتطبيق داخل بلوك الـ plugins الحديث
+          # تطبيق البلاجن في build.gradle الخاص بالـ app
           APP_GRADLE="android/app/build.gradle"
           sed -i '/plugins {/a \    id "com.google.gms.google-services"' $APP_GRADLE
           
-          # ثالثاً: إنشاء ملف google-services.json لمنع توقف المحرك أثناء الفحص التلقائي
+          # توليد الـ JSON القياسي باسم الحزمة الجديد المطابق للمشروع
           mkdir -p android/app
           echo '{
             "project_info": {
@@ -59,7 +59,7 @@ jobs:
             "client": [{
               "client_info": {
                 "mobilesdk_app_id": "1:123456789:android:abcdef",
-                "android_client_info": {"package_name": "com.judeadaiy.chat_app"}
+                "android_client_info": {"package_name": "com.judeadaiy.dardashati"}
               },
               "api_key": [{"current_key": "AIzaSyDummy-Key"}]
             }]
@@ -77,7 +77,6 @@ jobs:
           echo "storeFile=upload-keystore.jks" >> android/key.properties
           
           APP_GRADLE="android/app/build.gradle"
-          
           sed -i '/android {/i \def keystoreProperties = new Properties()\ndef keystorePropertiesFile = rootProject.file("key.properties")\nif (keystorePropertiesFile.exists()) {\n    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))\n}\n' $APP_GRADLE
           
           sed -i '/buildTypes {/i \    signingConfigs {\n        release {\n            keyAlias keystoreProperties["keyAlias"]\n            keyPassword keystoreProperties["keyPassword"]\n            storeFile file(keystoreProperties["storeFile"])\n            storePassword keystoreProperties["storePassword"]\n        }\n    }\n' $APP_GRADLE
@@ -90,10 +89,10 @@ jobs:
           echo "flutter.minSdkVersion=21" >> android/local.properties
           echo "flutter.targetSdkVersion=34" >> android/local.properties
 
+      # أداة الإصلاح ستقوم بمزامنة الكود مع الاسم الفعلي للمشروع
       - name: Auto-fix Code Deprecations
         run: |
           dart fix --apply
-          flutter pub run flutter_launcher_icons || true
 
       - name: Build Signed APK
         run: |
@@ -102,6 +101,6 @@ jobs:
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: SeaChat-Release-Signed-APK
+          name: Dardashati-Release-Signed-APK
           path: build/app/outputs/flutter-apk/app-release.apk
 
