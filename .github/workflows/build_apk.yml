@@ -25,9 +25,15 @@ jobs:
         with:
           flutter-version: '3.22.0'
           channel: 'stable'
-          cache: true
+          cache: false # ❌ تم إيقاف الكاش لمنع التداخل مع الأسماء القديمة
 
-      # تم تعديل اسم المشروع هنا إلى dardashati ليتوافق مع الـ pubspec.yaml الخاص بك
+      # تنظيف بيئة العمل لضمان قراءة ملف pubspec الجديد تماماً
+      - name: Clean and Reset Workspace
+        run: |
+          flutter pub cache clean --force
+          flutter clean || true
+
+      # إعادة بناء منصة أندرويد بالاسم الجديد والمطابق بنسبة 100%
       - name: Recreate Android platform files
         run: |
           flutter create . --platforms=android --project-name=dardashati --org=com.judeadaiy
@@ -41,15 +47,15 @@ jobs:
 
       - name: Setup Google Services
         run: |
-          # إضافة تعريف البلاجن في settings.gradle الحديث
+          # 1. تعريف البلاجن في settings.gradle الحديث
           SETTINGS_GRADLE="android/settings.gradle"
           sed -i '/plugins {/a \    id "com.google.gms.google-services" version "4.4.1" apply false' $SETTINGS_GRADLE
           
-          # تطبيق البلاجن في build.gradle الخاص بالـ app
+          # 2. تطبيق البلاجن في build.gradle الخاص بالـ app
           APP_GRADLE="android/app/build.gradle"
           sed -i '/plugins {/a \    id "com.google.gms.google-services"' $APP_GRADLE
           
-          # توليد الـ JSON القياسي باسم الحزمة الجديد المطابق للمشروع
+          # 3. توليد الـ JSON القياسي باسم الحزمة الصحيح com.judeadaiy.dardashati
           mkdir -p android/app
           echo '{
             "project_info": {
@@ -89,9 +95,10 @@ jobs:
           echo "flutter.minSdkVersion=21" >> android/local.properties
           echo "flutter.targetSdkVersion=34" >> android/local.properties
 
-      # أداة الإصلاح ستقوم بمزامنة الكود مع الاسم الفعلي للمشروع
-      - name: Auto-fix Code Deprecations
+      # حقن يدوي صريح لربط استدعاءات الكود باسم مشروعك الجديد بالكامل
+      - name: Force Fix Package Resolution
         run: |
+          echo "dardashati:lib/" > .packages
           dart fix --apply
 
       - name: Build Signed APK
