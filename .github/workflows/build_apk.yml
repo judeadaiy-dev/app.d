@@ -27,7 +27,7 @@ jobs:
           channel: 'stable'
           cache: false
 
-      # 1. توليد مجلد أندرويد تلقائياً بالاعتماد على الاسم المكتوب في pubspec.yaml الخاص بك
+      # 1. توليد مجلد أندرويد تلقائياً بالاعتماد على الاسم الحقيقي لمشروعك
       - name: Recreate Android Project Files
         run: |
           flutter create . --platforms=android --org=com.judeadaiy
@@ -40,12 +40,50 @@ jobs:
           echo "flutter.minSdkVersion=23" >> android/local.properties
           echo "flutter.targetSdkVersion=34" >> android/local.properties
 
-      # 3. أمر البناء الفعلي النظيف (سيقرأ فلاتر الـ SDK 23 تلقائياً)
+      # 3. الحل الجذري: فرض إصدار كوتلن وأدوات جرادل حديثة لحل تضارب الـ Kotlin Module والـ D8
+      - name: Patch Android Build Tools and Kotlin
+        run: |
+          # تعديل ملف android/build.gradle الرئيسي لرفع إصدار الكوتلن وأدوات بناء الأندرويد لنسخة متوافقة
+          cat << 'EOF' > android/build.gradle
+          buildscript {
+              ext.kotlin_version = '1.9.20'
+              repositories {
+                  google()
+                  mavenCentral()
+              }
+              dependencies {
+                  classpath 'com.android.tools.build:gradle:8.1.0'
+                  classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+              }
+          }
+          allprojects {
+              repositories {
+                  google()
+                  mavenCentral()
+              }
+          }
+          rootProject.buildDir = "../build"
+          subprojects {
+              project.buildDir = "${rootProject.buildDir}/${project.name}"
+          }
+          subprojects {
+              project.evaluationDependsOn(":app")
+          }
+          tasks.register("clean", Delete) {
+              delete rootProject.buildDir
+          }
+          EOF
+          
+          # إجبار الجرادل الداخلي للتطبيق على استقبال النسخ الجديدة وتجاوز قيود التقليص (Shrinking)
+          APP_GRADLE="android/app/build.gradle"
+          sed -i 's/minSdkVersion.*/minSdkVersion 23/g' $APP_GRADLE 2>/dev/null || true
+
+      # 4. أمر البناء القياسي والنظيف مع تعطيل الـ R8 shrinker مؤقتاً إذا لزم الأمر كحل احتياطي معلن من فلاتر
       - name: Build APK Release
         run: |
-          flutter build apk --release --no-tree-shake-icons --target-platform android-arm,android-arm64,android-x64
+          flutter build apk --release --no-tree-shake-icons --no-shrink --target-platform android-arm,android-arm64,android-x64
 
-      # 4. رفع ملف الـ APK النهائي للتحميل باسم مشروعك الأصلي
+      # 5. رفع ملف الـ APK النهائي للتحميل
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
