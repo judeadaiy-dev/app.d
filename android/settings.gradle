@@ -21,4 +21,4 @@ plugins {
 }
 
 include ":app"
-UPDATE public.profiles SET role = 'admin' WHERE username = 'يوزرك';
+
