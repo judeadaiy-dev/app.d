@@ -1,4 +1,4 @@
-name: Standard Build Flutter APK
+Name: Standard Build Flutter APK
 
 on:
   push:
@@ -33,7 +33,6 @@ jobs:
       - name: Integrate and Complete Android Structure
         run: |
           flutter config --no-analytics
-          # تحديث وتوليد الملفات المفقودة فقط مع الحفاظ على ملفاتك الأساسية مرفوعة
           flutter create . --platforms=android --org=com.judeadaiy
 
       # 4. حقن مسار الـ SDK والإصدارات في ملف الخصائص
@@ -56,7 +55,7 @@ jobs:
             sed -i 's/gradle-.*-bin.zip/gradle-8.2-all.zip/g' android/gradle/wrapper/gradle-wrapper.properties
           fi
 
-      # 6. تحديث ملف الجرادل للتطبيق لفرض جافا 17 الموحدة وحل تعارض الـ JVM (تم إصلاح الـ EOF هنا)
+      # 6. تحديث ملف الجرادل للتطبيق لفرض جافا 17 الموحدة وحل تعارض الـ JVM
       - name: Patch Application Gradle for Java 17 Compatibility
         run: |
           if [ -f android/app/build.gradle ]; then
@@ -73,35 +72,16 @@ jobs:
             # حقن كود برمجى لضمان تمرير الـ SDK للمشاريع الفرعية تلقائياً عند التجميع
             cat << 'EOF' >> android/app/build.gradle
 
-subprojects {
-    project.tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
-        kotlinOptions {
-            jvmTarget = "17"
-        }
-    }
-    project.tasks.withType(JavaCompile).configureEach {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
-    }
-}
-EOF
+            subprojects {
+                project.tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
+                    kotlinOptions {
+                        jvmTarget = "17"
+                    }
+                }
+                project.tasks.withType(JavaCompile).configureEach {
+                    sourceCompatibility = JavaVersion.VERSION_17
+                    targetCompatibility = JavaVersion.VERSION_17
+                }
+            }
+          EOF
           fi
-
-      # 7. جلب المكتبات من الـ pubspec.yaml الخاص بك واكتشاف حزم الـ Plugins
-      - name: Install Dependencies
-        run: |
-          flutter pub get
-
-      # 8. البناء المباشر المستقر بالاعتماد على الهيكل المصلح كلياً
-      - name: Build APK Release
-        run: |
-          flutter build apk --release \
-            --target-platform android-arm,android-arm64,android-x64 \
-            --no-tree-shake-icons
-
-      # 9. رفع ملف الـ APK النهائي للتحميل مباشرة من الـ Artifacts
-      - name: Upload APK Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: App-Release-APK
-          path: build/app/outputs/flutter-apk/app-release.apk
