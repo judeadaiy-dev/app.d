@@ -14,7 +14,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 1. تهيئة بيئة الجافا
+      # 1. تهيئة بيئة الجافا المتوافقة مع جرادل 8
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
@@ -29,8 +29,8 @@ jobs:
           channel: 'stable'
           cache: false
 
-      # 3. خطوة الإنقاذ: توليد ملف gradle-wrapper.properties السليم والمفقود في مشروعك
-      - name: Fix Gradle Wrapper Properties
+      # 3. تزويد السيرفر بنسخة الجرادل 8.0 المطلوبة رسمياً لتطبيقك
+      - name: Configure Gradle Wrapper Version
         run: |
           mkdir -p android/gradle/wrapper
           cat << 'EOF' > android/gradle/wrapper/gradle-wrapper.properties
@@ -38,22 +38,22 @@ jobs:
           distributionPath=wrapper/dists
           zipStoreBase=GRADLE_USER_HOME
           zipStorePath=wrapper/dists
-          distributionUrl=https\://services.gradle.org/distributions/gradle-7.6.3-all.zip
+          distributionUrl=https\://services.gradle.org/distributions/gradle-8.0-all.zip
           EOF
 
-      # 4. تنظيف وجلب الحزم
+      # 4. جلب الحزم وتنظيف المشروع
       - name: Install Dependencies
         run: |
           flutter pub get
           flutter clean
           flutter pub get
 
-      # 5. أمر البناء المباشر
+      # 5. أمر البناء الصافي والنهائي
       - name: Build APK Release
         run: |
           flutter build apk --release --no-tree-shake-icons --target-platform android-arm,android-arm64,android-x64
 
-      # 6. رفع ملف الـ APK الناتجة للتحميل
+      # 6. رفع ملف الـ APK للتحميل
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
