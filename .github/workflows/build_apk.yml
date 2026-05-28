@@ -1,4 +1,4 @@
-Name: Standard Build Flutter APK
+name: Standard Build Flutter APK
 
 on:
   push:
