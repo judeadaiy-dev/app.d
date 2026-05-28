@@ -7,7 +7,6 @@ environment:
   sdk: '>=3.3.0 <4.0.0'
 
 dependencies:
-dependencies:
   flutter:
     sdk: flutter
   flutter_localizations:
@@ -16,10 +15,10 @@ dependencies:
   # State Management
   provider: ^6.1.2
 
-  # Backend (جعلناها مرنة لتختار المتوافق مع دارت 3.4.0)
+  # Backend
   supabase_flutter: any
   
-  # Firebase - مصفوفة الإصدار المتوافق تلقائياً
+  # Firebase - للإشعارات Push Notifications
   firebase_core: any
   firebase_messaging: any
   flutter_local_notifications: any
@@ -38,22 +37,22 @@ dependencies:
   timeago: any
   uuid: any
   
-  # Permissions
+  # Permissions - للمايك والكاميرا والتخزين
   permission_handler: any
   
-  # Audio Recording - النسخة الحديثة المتوافقة
+  # Audio Recording - تم جعلها مرنة لحل مشكلة الـ embedding
   record: any
   
-  # Audio Player - تم فتح الإصدار لتتجنب شرط دارت الحديث
+  # Audio Player - تشغيل الرسائل الصوتية
   just_audio: any
   
-  # File Picker
+  # File Picker - اختيار ملفات
   file_picker: any
   
-  # Path
+  # Path - مسارات الملفات
   path_provider: any
   
-  # Connectivity
+  # Connectivity - فحص النت
   connectivity_plus: any
 
 dev_dependencies:
