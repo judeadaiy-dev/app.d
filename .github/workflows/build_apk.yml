@@ -85,3 +85,18 @@ jobs:
             }
           EOF
           fi
+
+      # 7. تحميل حزم الاعتماديات (Dependencies) الخاصة بفلاتر
+      - name: Install Dependencies
+        run: flutter pub get
+
+      # 8. البناء الفعلي لملف الـ APK بصيغة الـ Release
+      - name: Build APK
+        run: flutter build apk --release
+
+      # 9. رفع ملف الـ APK الناتج لتتمكن من تحميله مباشرة من صفحة الـ Actions
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
