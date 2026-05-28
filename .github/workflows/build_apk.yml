@@ -14,7 +14,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 1. تهيئة بيئة جافا الحديثة (JDK 17)
+      # 1. تهيئة بيئة جافا الحديثة والمستقرة (JDK 17)
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
@@ -29,17 +29,17 @@ jobs:
           channel: 'stable'
           cache: true
 
-      # 3. بناء هيكل أندرويد نظيف
+      # 3. بناء هيكل أندرويد نظيف كلياً من السيرفر
       - name: Force Re-create Clean Android Structure
         run: |
           flutter config --no-analytics
           rm -rf android
           flutter create . --platforms=android --org=com.judeadaiy
 
-      # 4. إصلاح ملف الجرادل الرئيسي برمجياً وإرجاعه للنظام الكلاسيكي المتوافق مع كل المكاتب
-      - name: Overwrite with Classic Compatible Gradle
+      # 4. التعديل الجذري وحقن الكود الكلاسيكي المتوافق مع المكاتب الفرعية لتعريف متغير flutter
+      - name: Patch Android Project For Plus Plugins Compatibility
         run: |
-          # إعادة كتابة ملف android/build.gradle بالكامل بالطريقة التي تفهمها المكاتب الفرعية
+          # 1. تحديث وإعادة صياغة ملف android/build.gradle بالكامل ليحتوي على التوزيعة الصحيحة للمكاتب
           cat << 'EOF' > android/build.gradle
           buildscript {
               ext.kotlin_version = '1.9.24'
@@ -73,7 +73,27 @@ jobs:
           }
           EOF
 
-      # 5. حقن وتثبيت قيم الـ SDK الصريحة في ملف الخصائص
+          # 2. إصلاح ملف settings.gradle ليتكامل مع البناء الكلاسيكي بدلاً من الـ DSL المقفل
+          cat << 'EOF' > android/settings.gradle
+          include ':app'
+
+          def localProperties = new Properties()
+          def localPropertiesFile = new File(rootProject.projectDir, "local.properties")
+          if (localPropertiesFile.exists()) {
+              localPropertiesFile.withReader('UTF-8') { reader ->
+                  localProperties.load(reader)
+              }
+          }
+
+          def flutterSdkPath = localProperties.getProperty('flutter.sdk')
+          if (flutterSdkPath == null) {
+              throw new GradleException("Flutter SDK not found. Define location with flutter.sdk in the local.properties file.")
+          }
+
+          includeBuild("$flutterSdkPath/packages/flutter_tools/gradle")
+          EOF
+
+      # 5. حقن وتثبيت قيم الـ SDK الصريحة في ملف الخصائص لإنهاء خطأ compileSdkVersion المفقود
       - name: Inject Complete SDK Paths
         run: |
           echo "flutter.sdk=$FLUTTER_ROOT" > android/local.properties
@@ -86,7 +106,7 @@ jobs:
           echo "android.enableJetifier=true" >> android/gradle.properties
           echo "org.gradle.jvmargs=-Xmx3072m -XX:MaxMetaspaceSize=1024m" >> android/gradle.properties
 
-      # 6. تعديل ملف التطبيق الداخلي ليتوافق مع الملف الرئيسي الكلاسيكي
+      # 6. تعديل ملف التطبيق الداخلي لفرض التحديثات وتجنب التعارضات
       - name: Patch Application Configuration
         run: |
           if [ -f android/app/build.gradle ]; then
@@ -97,12 +117,12 @@ jobs:
             sed -i 's/namespace .*/namespace "com.judeadaiy.chat_app"/g' android/app/build.gradle
           fi
 
-      # 7. جلب المكتبات والحزم لتتطابق مع الهيكل المحدث والمصلح
+      # 7. جلب المكتبات والحزم لتتطابق مع الهيكل المعياري الجديد
       - name: Install Dependencies
         run: |
           flutter pub get
 
-      # 8. البناء الذكي والنهائي للمنصات المستهدفة
+      # 8. البناء النهائي المستقر وتوليد ملف الـ APK
       - name: Build APK Release
         run: |
           flutter build apk --release \
