@@ -33,13 +33,13 @@ jobs:
       - name: Install Dependencies
         run: flutter pub get
 
-      # 4. مسح الهيكل المكسور وتوليد بنية أساسية
+      # 4. مسح الهيكل المكسور وتوليد بنية أساسية نظيفة
       - name: Recreate Base Android Structure
         run: |
           rm -rf android
           flutter create . --platforms=android --org=com.judeadaiy
 
-      # 5. السحر الهندسي: حقن ملفات التوافقية الشاملة لإرضاء المكتبات الخارجية
+      # 5. السحر الهندسي: حقن ملفات التوافقية الشاملة بالترتيب الصحيح
       - name: Inject Compatibility Layer
         run: |
           # أ. ضبط ملف الخصائص الأساسي
@@ -48,7 +48,7 @@ jobs:
           echo "flutter.minSdkVersion=23" >> android/local.properties
           echo "flutter.targetSdkVersion=34" >> android/local.properties
           
-          # ب. إعادة كتابة settings.gradle لدعم استدعاء الحزم التلقائي (الـ Plugins) بنظام مستقر
+          # ب. كتابة ملف settings.gradle الرئيسي والمستقر لقراءة الـ Plugins
           cat << 'EOF' > android/settings.gradle
           pluginManagement {
               def flutterSdkPath = {
@@ -80,8 +80,14 @@ jobs:
           include ":app"
           EOF
 
-          # ج. فرض الـ compileSdkVersion والخصائص مباشرة داخل ملف app/build.gradle لإنهاء خطأ connectivity_plus
+          # ج. إعادة كتابة ملف app/build.gradle وجعل كتلة الـ plugins في السطر الأول تماماً!
           cat << 'EOF' > android/app/build.gradle
+          plugins {
+              id "com.android.application"
+              id "org.jetbrains.kotlin.android"
+              id "dev.flutter.flutter-gradle-plugin"
+          }
+
           def localProperties = new Properties()
           def localPropertiesFile = rootProject.file('local.properties')
           if (localPropertiesFile.exists()) {
@@ -93,12 +99,6 @@ jobs:
           def flutterRoot = localProperties.getProperty('flutter.sdk')
           if (flutterRoot == null) {
               throw new GradleException("Flutter SDK not found. Define location with flutter.sdk in the local.properties file.")
-          }
-
-          plugins {
-              id "com.android.application"
-              id "org.jetbrains.kotlin.android"
-              id "dev.flutter.flutter-gradle-plugin"
           }
 
           android {
@@ -123,7 +123,7 @@ jobs:
               }
           }
 
-          // حلقة التوافقية الذكية لتمرير قيم الـ SDK للجافا والكوتلن لكل المكاتب الخارجية غصباً عنها
+          // فرض معايير الـ SDK الحديثة على كل المكتبات الخارجية والـ Plugins تلقائياً
           subprojects {
               afterEvaluate { project ->
                   if (project.hasProperty('android')) {
@@ -144,7 +144,7 @@ jobs:
           }
           EOF
 
-      # 6. أمر البناء الصريح والمباشر
+      # 6. أمر البناء القياسي المباشر
       - name: Build APK Release
         run: |
           flutter build apk --release --no-tree-shake-icons --target-platform android-arm,android-arm64,android-x64
