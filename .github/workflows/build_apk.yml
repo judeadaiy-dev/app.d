@@ -1,4 +1,4 @@
-name: Standard Build Flutter APK
+name: Smart Template Build Flutter APK
 
 on:
   push:
@@ -14,111 +14,54 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 1. تهيئة بيئة جافا الحديثة والمستقرة (JDK 17)
+      # 1. تهيئة بيئة الجافا الحديثة
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
 
-      # 2. تثبيت محرك فلاتر المستقر بالإصدار 3.22.0
+      # 2. تهيئة محرك فلاتر المستقر
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.22.0'
           channel: 'stable'
-          cache: true
+          cache: false
 
-      # 3. مزامنة ملفات أندرويد وتنظيف الذاكرة المؤقتة
-      - name: Integrate and Complete Android Structure
-        run: |
-          flutter config --no-analytics
-          flutter create . --platforms=android --org=com.judeadaiy
-          flutter clean
-
-      # 4. التطهير الحاسم لملفات Gradle لقطع دابر تكرار المهام (generateLockfiles)
-      - name: Purge Legacy Flutter Configurations
-        run: |
-          # تنظيف ملف الجرادل الرئيسي للتطبيق من الاستدعاءات القديمة والمكررة
-          if [ -f android/app/build.gradle ]; then
-            sed -i '/apply from:.*flutter/d' android/app/build.gradle
-            sed -i '/apply plugin:.*flutter/d' android/app/build.gradle
-            sed -i '/def flutterRoot/d' android/app/build.gradle
-          fi
-
-          # تنظيف ملف الجرادل الخاص بالمشروع ككل
-          if [ -f android/build.gradle ]; then
-            sed -i '/apply from:.*flutter/d' android/build.gradle
-          fi
-
-      # 5. ربط الإعدادات بالجذر مؤقتاً لتفادي مشاكل التعرف على المسارات
-      - name: Link Settings Gradle to Root
-        run: |
-          if [ -f android/settings.gradle ]; then
-            cp android/settings.gradle ./settings.gradle
-          fi
-
-      # 6. حقن مسار الـ SDK والإصدارات القياسية المستقرة
-      - name: Configure SDK and Gradle Properties
-        run: |
-          echo "flutter.sdk=$FLUTTER_ROOT" > android/local.properties
-          echo "flutter.compileSdkVersion=34" >> android/local.properties
-          echo "flutter.minSdkVersion=23" >> android/local.properties
-          echo "flutter.targetSdkVersion=34" >> android/local.properties
-          
-          # تهيئة الذاكرة والـ AndroidX الفعال لمنع تعارض مكاتب قاعدة البيانات والـ Chat
-          echo "android.useAndroidX=true" > android/gradle.properties
-          echo "android.enableJetifier=true" >> android/gradle.properties
-          echo "org.gradle.jvmargs=-Xmx3072m -XX:MaxMetaspaceSize=1024m" >> android/gradle.properties
-          
-          cp android/local.properties ./local.properties
-
-      # 7. ترقية الـ Wrapper ليتوافق تماماً مع نظام أندرويد الحديث وجافا 17
-      - name: Upgrade Gradle Wrapper Version
-        run: |
-          if [ -f android/gradle/wrapper/gradle-wrapper.properties ]; then
-            sed -i 's/gradle-.*-bin.zip/gradle-8.2-all.zip/g' android/gradle/wrapper/gradle-wrapper.properties
-          fi
-
-      # 8. توحيد جافا 17 لجميع مشاريع المكاتب الفرعية تلقائياً عند التجميع
-      - name: Patch Application Gradle for Java 17 Compatibility
-        run: |
-          if [ -f android/app/build.gradle ]; then
-            sed -i 's/minSdkVersion .*/minSdkVersion 23/g' android/app/build.gradle
-            sed -i 's/targetSdkVersion .*/targetSdkVersion 34/g' android/app/build.gradle
-            sed -i 's/compileSdkVersion .*/compileSdkVersion 34/g' android/app/build.gradle
-            
-            sed -i 's/sourceCompatibility .*/sourceCompatibility JavaVersion.VERSION_17/g' android/app/build.gradle
-            sed -i 's/targetCompatibility .*/targetCompatibility JavaVersion.VERSION_17/g' android/app/build.gradle
-            sed -i 's/jvmTarget = .*/jvmTarget = "17"/g' android/app/build.gradle
-            
-            cat << 'EOF' >> android/app/build.gradle
-
-            subprojects {
-                project.tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
-                    kotlinOptions {
-                        jvmTarget = "17"
-                    }
-                }
-                project.tasks.withType(JavaCompile).configureEach {
-                    sourceCompatibility = JavaVersion.VERSION_17
-                    targetCompatibility = JavaVersion.VERSION_17
-                }
-            }
-          EOF
-          fi
-
-      # 9. تحميل حزم الاعتماديات (Dependencies)
+      # 3. جلب الحزم والمكتبات لتحليل متطلباتها
       - name: Install Dependencies
         run: flutter pub get
 
-      # 10. البناء الفعلي لملف الـ APK بصيغة الـ Release
-      - name: Build APK
-        run: flutter build apk --release
+      # 4. توليد هيكل أندرويد الافتراضي تلقائياً
+      - name: Auto-Generate Base Android Structure
+        run: |
+          flutter create . --platforms=android --org=com.judeadaiy
 
-      # 11. رفع ملف الـ APK الناتج لتتمكن من تحميله مباشرة من السيرفر
+      # 5. السحر الحقيقي: استبدال الملفات الافتراضية بملفاتك الذكية المحدثة يدوياً
+      - name: Inject Smart Custom Configurations
+        run: |
+          # 1. نسخ ملف الخصائص ومسار الـ SDK
+          echo "flutter.sdk=$FLUTTER_ROOT" > android/local.properties
+          
+          # 2. استبدال ملف settings.gradle الرئيسي
+          cp android_config/settings.gradle android/settings.gradle
+          
+          # 3. استبدال ملف build.gradle الداخلي للتطبيق
+          cp android_config/build.gradle android/app/build.gradle
+          
+          # 4. استبدال ملف إعدادات إصدار الجرادل
+          cp android_config/gradle-wrapper.properties android/gradle/wrapper/gradle-wrapper.properties
+
+      # 6. أمر البناء الصريح والنظيف (سيعتمد كلياً على ملفاتك الثلاثة المفرغتة)
+      - name: Build APK Release
+        run: |
+          flutter build apk --release --no-tree-shake-icons --target-platform android-arm,android-arm64,android-x64
+
+      # 7. رفع ملف الـ APK النهائي للتحميل
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: release-apk
+          name: App-Smart-Release-APK
           path: build/app/outputs/flutter-apk/app-release.apk
+
