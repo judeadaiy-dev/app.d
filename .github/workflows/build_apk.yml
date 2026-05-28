@@ -14,7 +14,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 1. تهيئة بيئة جافا الحديثة والمطلوبة لإصدارات فلاتر 3.22 وما فوق (JDK 17)
+      # 1. تهيئة بيئة جافا الحديثة (JDK 17)
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
@@ -22,7 +22,7 @@ jobs:
           java-version: '17'
           cache: 'gradle'
 
-      # 2. تثبيت محرك فلاتر بالإصدار المستقر المحدد 3.22.0 مع تفعيل الكاش
+      # 2. تثبيت محرك فلاتر المستقر بالإصدار 3.22.0
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
@@ -30,46 +30,43 @@ jobs:
           channel: 'stable'
           cache: true
 
-      # 3. جلب المكاتب الحديثة أونلاين وتثبيتها بشكل صحيح لتجنب أخطاء الكاش
-      - name: Install Dependencies
+      # 3. جلب وتحديث المكاتب وحل تعارض الإصدارات تلقائياً بناءً على SDK الحالي
+      - name: Install and Upgrade Dependencies
         run: |
           flutter config --no-analytics
+          flutter pub upgrade --major-versions --no-offline
           flutter pub get
 
-      # 4. تهيئة الخصائص الذكية لأندرويد وحقن قيم الـ SDK المتوافقة مع المكاتب الحديثة
+      # 4. تهيئة الخصائص الذكية لأندرويد وحقن قيم الـ SDK المتوافقة
       - name: Inject SDK Paths & Android Properties
         run: |
           mkdir -p android
-          # إعداد ملف الخصائص المحلية وتحديد إصدار الـ SDK المناسب للإشعارات والصوت
           echo "flutter.sdk=$FLUTTER_ROOT" > android/local.properties
-          echo "flutter.compileSdkVersion=34" >> android/local.properties
+          echo "flutter.compileSdkVersion=34" > android/local.properties
           echo "flutter.minSdkVersion=23" >> android/local.properties
           echo "flutter.targetSdkVersion=34" >> android/local.properties
           
-          # تفعيل خصائص أندرويد لدمج المكاتب وتفادي مشاكل نقص الذاكرة (Memory Out of Bounds)
           echo "android.useAndroidX=true" > android/gradle.properties
           echo "android.enableJetifier=true" >> android/gradle.properties
           echo "org.gradle.jvmargs=-Xmx3072m -XX:MaxMetaspaceSize=1024m" >> android/gradle.properties
 
-      # 5. الفحص الذكي وتحديث إصدار Kotlin وتخطي فحص الـ Embedding القديم
+      # 5. تحديث إعدادات الكوتلن والجرادل لضمان توافقية مكاتب الصوت والاتصال
       - name: Patch Gradle and Kotlin Configuration
         run: |
-          # فرض إصدار كوتلن حديث ومتوافق مع مكتبة Firebase و Record الجديدة
           if [ -f android/build.gradle ]; then
             sed -i 's/ext.kotlin_version = .*/ext.kotlin_version = "1.9.24"/g' android/build.gradle
             sed -i 's/kotlin("android") version .*/kotlin("android") version "1.9.24"/g' android/build.gradle
           fi
 
-      # 6. البناء الذكي مع تخطي مشاكل المكاتب القديمة العالقة نهائياً
+      # 6. البناء الذكي للمنصات المستهدفة وتخطي فحص الـ Embedding
       - name: Build APK Release
         run: |
           flutter build apk --release \
             --target-platform android-arm,android-arm64,android-x64 \
             --no-tree-shake-icons \
-            --no-pub \
             --dart-define=android.ignoreEmbeddingVersion=true
 
-      # 7. رفع ملف الـ APK النهائي للتحميل مباشرة من الـ Artifacts
+      # 7. رفع ملف الـ APK النهائي للتحميل
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
