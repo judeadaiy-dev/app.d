@@ -29,19 +29,31 @@ jobs:
           channel: 'stable'
           cache: false
 
-      # 3. تنظيف وجلب الحزم
+      # 3. خطوة الإنقاذ: توليد ملف gradle-wrapper.properties السليم والمفقود في مشروعك
+      - name: Fix Gradle Wrapper Properties
+        run: |
+          mkdir -p android/gradle/wrapper
+          cat << 'EOF' > android/gradle/wrapper/gradle-wrapper.properties
+          distributionBase=GRADLE_USER_HOME
+          distributionPath=wrapper/dists
+          zipStoreBase=GRADLE_USER_HOME
+          zipStorePath=wrapper/dists
+          distributionUrl=https\://services.gradle.org/distributions/gradle-7.6.3-all.zip
+          EOF
+
+      # 4. تنظيف وجلب الحزم
       - name: Install Dependencies
         run: |
           flutter pub get
           flutter clean
           flutter pub get
 
-      # 4. أمر البناء المباشر (بدون أي سكريبتات حقن)
+      # 5. أمر البناء المباشر
       - name: Build APK Release
         run: |
           flutter build apk --release --no-tree-shake-icons --target-platform android-arm,android-arm64,android-x64
 
-      # 5. رفع ملف الـ APK
+      # 6. رفع ملف الـ APK الناتجة للتحميل
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
