@@ -14,7 +14,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 1. تهيئة بيئة جافا الحديثة (JDK 17)
+      # 1. تهيئة بيئة جافا الحديثة والمستقرة (JDK 17)
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
@@ -22,7 +22,7 @@ jobs:
           java-version: '17'
           cache: 'gradle'
 
-      # 2. تثبيت محرك فلاتر بالإصدار المستقر 3.22.0
+      # 2. تثبيت محرك فلاتر المستقر بالإصدار 3.22.0
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
@@ -30,51 +30,56 @@ jobs:
           channel: 'stable'
           cache: true
 
-      # 3. إجبار فلاتر على توليد هيكل أندرويد حديث بالكامل (v2 Embedding تلقائياً)
+      # 3. إجبار فلاتر على توليد هيكل أندرويد نظيف ومتكامل من الصفر
       - name: Auto-Generate Clean Android Structure
         run: |
           flutter config --no-analytics
-          # توليد المجلد والملفات الأساسية المفقودة بأحدث قالب مدعوم
           flutter create . --platforms=android --org=com.judeadaiy
 
-      # 4. نسخ ملف الإعداد الخاص بك ليحل محل الملف الافتراضي وحقن قيم الـ SDK
-      - name: Apply User Gradle Configuration
+      # 4. حقن وتثبيت قيم الـ SDK الصريحة في ملف الخصائص لتقرأها كل المكتبات الفرعية
+      - name: Inject Complete SDK Paths
         run: |
-          # التأكد من وجود المجلدات المستهدفة
-          mkdir -p android/app
-          
-          # إذا كان ملف build.gradle الخاص بك في الجذر، سننقله للمكان الصحيح في تطبيق الأندرويد
-          if [ -f build.gradle ]; then
-            cp build.gradle android/app/build.gradle
-          elif [ -f android/build.gradle ] && [ ! -f android/app/build.gradle ]; then
-            # إذا وضعته داخل مجلد أندرويد مباشرة، سننقله إلى مجلد app الداخلي حيث ينتمي كودك
-            cp android/build.gradle android/app/build.gradle
-          fi
-
-          # كتابة ملف local.properties بالقيم التي حددتها أنت وتضمن التوافق
           echo "flutter.sdk=$FLUTTER_ROOT" > android/local.properties
           echo "flutter.compileSdkVersion=34" >> android/local.properties
           echo "flutter.minSdkVersion=23" >> android/local.properties
           echo "flutter.targetSdkVersion=34" >> android/local.properties
           
-          # إضافة خصائص الـ الجرادل لضمان عدم نقص الذاكرة ودعم الاندرويد الحديث
+          # تهيئة الذاكرة والـ AndroidX لمنع تعارض مكاتب Firebase والصوت
           echo "android.useAndroidX=true" > android/gradle.properties
           echo "android.enableJetifier=true" >> android/gradle.properties
           echo "org.gradle.jvmargs=-Xmx3072m -XX:MaxMetaspaceSize=1024m" >> android/gradle.properties
 
-      # 5. جلب الحزم والمكتبات بشكل صحيح ومطابقتها للهيكل الجديد
+      # 5. تعديل ملفات الجرادل برمجياً وبذكاء لفرض اسم الحزمة والتوافق الكامل لعام 2026
+      - name: Patch Gradle and Application Configuration
+        run: |
+          # فرض إصدار كوتلن حديث متوافق مع المكاتب في الملف الرئيسي
+          if [ -f android/build.gradle ]; then
+            sed -i 's/ext.kotlin_version = .*/ext.kotlin_version = "1.9.24"/g' android/build.gradle
+            sed -i 's/kotlin("android") version .*/kotlin("android") version "1.9.24"/g' android/build.gradle
+          fi
+
+          # تعديل قيم الـ SDK واسم الحزمة في ملف التطبيق الداخلي تلقائياً دون تدمير الهيكلية
+          if [ -f android/app/build.gradle ]; then
+            sed -i 's/minSdkVersion .*/minSdkVersion 23/g' android/app/build.gradle
+            sed -i 's/targetSdkVersion .*/targetSdkVersion 34/g' android/app/build.gradle
+            sed -i 's/compileSdkVersion .*/compileSdkVersion 34/g' android/app/build.gradle
+            sed -i 's/applicationId .*/applicationId "com.judeadaiy.chat_app"/g' android/app/build.gradle
+            sed -i 's/namespace .*/namespace "com.judeadaiy.chat_app"/g' android/app/build.gradle
+          fi
+
+      # 6. جلب المكتبات والحزم لتتطابق مع الهيكل المحدث والمصلح
       - name: Install Dependencies
         run: |
           flutter pub get
 
-      # 6. البناء النهائي الآمن والمستقر للمنصات المستهدفة
+      # 7. البناء الذكي والنهائي للمنصات المستهدفة
       - name: Build APK Release
         run: |
           flutter build apk --release \
             --target-platform android-arm,android-arm64,android-x64 \
             --no-tree-shake-icons
 
-      # 7. رفع ملف الـ APK النهائي للتحميل مباشرة
+      # 8. رفع ملف الـ APK النهائي للتحميل مباشرة من الـ Artifacts
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
