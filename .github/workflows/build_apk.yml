@@ -29,15 +29,14 @@ jobs:
           channel: 'stable'
           cache: true
 
-      # 3. الحل القاطع: جعل فلاتر ينشئ قالب أندرويد المعياري الكامل والمدعوم رسميًا لتخطي الفحص
+      # 3. بناء هيكل أندرويد حديث 100% لتخطي قيد القوالب غير المدعومة
       - name: Generate Supported Android Structure
         run: |
           flutter config --no-analytics
-          # مسح المجلد اليدوي لإنشاء الهيكل الرسمي المدعوم بالكامل
           rm -rf android
           flutter create . --platforms=android --org=com.judeadaiy
 
-      # 4. حقن مسار الـ SDK والإصدارات الصريحة داخل ملفات الخصائص لتقرأها كل الحزم
+      # 4. حقن مسار الـ SDK والإصدارات في ملف الخصائص
       - name: Configure SDK and Gradle Properties
         run: |
           echo "flutter.sdk=$FLUTTER_ROOT" > android/local.properties
@@ -50,7 +49,39 @@ jobs:
           echo "android.enableJetifier=true" >> android/gradle.properties
           echo "org.gradle.jvmargs=-Xmx3072m -XX:MaxMetaspaceSize=1024m" >> android/gradle.properties
 
-      # 5. ضبط إعدادات الجافا والكوتلن الحديثة داخل ملف build.gradle الافتراضي لضمان التوافق كلياً
+      # 5. الحل القاطع: إعادة صياغة ملف settings.gradle برمجياً ليحتوي على الـ Loader والمكتبات الموحدة
+      - name: Fix settings.gradle for Modern Plugins Compatibility
+        run: |
+          cat << 'EOF' > android/settings.gradle
+          pluginManagement {
+              def flutterSdkPath = ""
+              propertiesFile(rootProject.projectDir.parentFile.toPath().resolve("local.properties").toFile()).withReader('UTF-8') { reader ->
+                  def props = new Properties()
+                  props.load(reader)
+                  flutterSdkPath = props.getProperty('flutter.sdk')
+              }
+              settingsEvaluated { settings ->
+                  settings.pluginManagement.repositories {
+                      google()
+                      mavenCentral()
+                      gradlePluginPortal()
+                  }
+              }
+          }
+
+          plugins {
+              id "dev.flutter.flutter-plugin-loader" version "1.0.0"
+              id "com.android.application" version "8.2.1" apply false
+              id "org.jetbrains.kotlin.android" version "1.9.24" apply false
+          }
+
+          include ":app"
+          EOF
+
+          # ترقية الـ Wrapper ليتوافق مع نظام الأظافر الحديث وجافا 17
+          sed -i 's/gradle-.*-bin.zip/gradle-8.2-all.zip/g' android/gradle/wrapper/gradle-wrapper.properties
+
+      # 6. تحديث ملف الجرادل للتطبيق لفرض جافا 17 الموحدة وحل تعارض الـ JVM
       - name: Patch Application Gradle for Java 17 Compatibility
         run: |
           if [ -f android/app/build.gradle ]; then
@@ -59,25 +90,41 @@ jobs:
             sed -i 's/targetSdkVersion .*/targetSdkVersion 34/g' android/app/build.gradle
             sed -i 's/compileSdkVersion .*/compileSdkVersion 34/g' android/app/build.gradle
             
-            # توحيد جافا 17 للكوتلن والجافا لمنع خطأ الـ JVM target المتعارض مع المكتبات الحديثة
+            # توحيد جافا 17 للكوتلن والجافا لجميع المكتبات الفرعية والمشاريع المشتركة لمنع تعارض الـ JVM
             sed -i 's/sourceCompatibility .*/sourceCompatibility JavaVersion.VERSION_17/g' android/app/build.gradle
             sed -i 's/targetCompatibility .*/targetCompatibility JavaVersion.VERSION_17/g' android/app/build.gradle
             sed -i 's/jvmTarget = .*/jvmTarget = "17"/g' android/app/build.gradle
+            
+            # حقن كود برمجى لضمان تمرير الـ SDK لـ connectivity_plus تلقائياً عند التجميع
+            cat << 'EOF' >> android/app/build.gradle
+
+            subprojects {
+                project.tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
+                    kotlinOptions {
+                        jvmTarget = "17"
+                    }
+                }
+                project.tasks.withType(JavaCompile).configureEach {
+                    sourceCompatibility = JavaVersion.VERSION_17
+                    targetCompatibility = JavaVersion.VERSION_17
+                }
+            }
+            EOF
           fi
 
-      # 6. جلب المكتبات من الـ pubspec.yaml الخاص بك
+      # 7. جلب المكتبات من الـ pubspec.yaml الخاص بك
       - name: Install Dependencies
         run: |
           flutter pub get
 
-      # 7. البناء المباشر المستقر بالاعتماد على الهيكل الرسمي المدعوم
+      # 8. البناء المباشر المستقر بالاعتماد على الهيكل المصلح كلياً
       - name: Build APK Release
         run: |
           flutter build apk --release \
             --target-platform android-arm,android-arm64,android-x64 \
             --no-tree-shake-icons
 
-      # 8. رفع ملف الـ APK النهائي للتحميل مباشرة من الـ Artifacts
+      # 9. رفع ملف الـ APK النهائي للتحميل مباشرة من الـ Artifacts
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
