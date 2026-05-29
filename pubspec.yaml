@@ -18,6 +18,11 @@ dependencies:
   # Backend
   supabase_flutter: any
   
+  # Firebase - للإشعارات Push Notifications
+  firebase_core: any
+  firebase_messaging: any
+  flutter_local_notifications: any
+
   # UI & Theme
   google_fonts: any
   glassmorphism: ^3.0.0
@@ -32,24 +37,33 @@ dependencies:
   timeago: any
   uuid: any
   
-  # Permissions
+  # Permissions - للمايك والكاميرا والتخزين
   permission_handler: any
   
-  # File Picker
+  # Audio Recording - تم جعلها مرنة لحل مشكلة الـ embedding
+  record: any
+  
+  # Audio Player - تشغيل الرسائل الصوتية
+  just_audio: any
+  
+  # File Picker - اختيار ملفات
   file_picker: any
   
-  # Path
+  # Path - مسارات الملفات
   path_provider: any
   
-  # Connectivity
+  # Connectivity - فحص النت
   connectivity_plus: any
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^4.0.0
+  
+  # توليد الأيقونة بكل المقاسات
   flutter_launcher_icons: ^0.14.0
 
+# إعدادات الأيقونة الخاصة بك حصراً
 flutter_launcher_icons:
   android: "launcher_icon"
   ios: true
@@ -61,5 +75,17 @@ flutter_launcher_icons:
 
 flutter:
   uses-material-design: true
+
+  # تم تصحيح مسار الصور ليتعرف عليه السيرفر مباشرة بدون أخطاء تداخل
   assets:
     - assets/images/app_logo.png
+
+  # تم تصحيح مسارات الخطوط لضمان دمجها داخل الـ APK بنجاح
+  fonts:
+    - family: Cairo
+      fonts:
+        - asset: assets/fonts/Cairo-Regular.ttf
+        - asset: assets/fonts/Cairo-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/Cairo-SemiBold.ttf
+          weight: 600
