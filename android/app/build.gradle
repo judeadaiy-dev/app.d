@@ -4,23 +4,9 @@ plugins {
     id "dev.flutter.flutter-gradle-plugin"
 }
 
-def localProperties = new Properties()
-def localPropertiesFile = rootProject.file('local.properties')
-if (localPropertiesFile.exists()) {
-    localPropertiesFile.withReader('UTF-8') { reader ->
-        localProperties.load(reader)
-    }
-}
-
-def flutterRoot = localProperties.getProperty('flutter.sdk')
-if (flutterRoot == null) {
-    throw new GradleException("Flutter SDK not found. Define location with flutter.sdk in the local.properties file.")
-}
-
 android {
-    // المعرف الحديث والوحيد للتطبيق المتوافق مع الفلاتر الجديد
     namespace "com.judeadaiy.chat_app"
-    compileSdkVersion 34
+    compileSdk 34
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
@@ -32,40 +18,16 @@ android {
     }
 
     defaultConfig {
-        // حزمة تطبيقك الرسمية والمطابقة للـ pubspec
         applicationId "com.judeadaiy.chat_app"
-        
-        // القيمة السحرية 23 لحل مشكلة الميكروفون والصوت والاتصال
-        minSdkVersion 23
-        targetSdkVersion 34
+        minSdk 23
+        targetSdk 34
         versionCode 1
         versionName "1.0.0"
     }
 
     buildTypes {
         release {
-            // للتجربة البرمجية السريعة على هاتفك
             signingConfig signingConfigs.debug
-            minifyEnabled false
-            shrinkResources false
         }
     }
 }
-
-flutter {
-    source '../..'
-}
-
-// الهندسة الذكية: إجبار كل المكتبات الخارجية والـ Plugins على التوافق مع جافا 17 لمنع أخطاء البناء
-subprojects {
-    project.tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
-        kotlinOptions {
-            jvmTarget = "17"
-        }
-    }
-    project.tasks.withType(JavaCompile).configureEach {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
-    }
-}
-
