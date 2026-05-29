@@ -29,20 +29,33 @@ jobs:
           channel: 'stable'
           cache: false
 
-      # 3. جلب الحزم وتطهير المشروع
+      # 3. جلب الحزم وتطهير المشروع بالكامل
       - name: Install Dependencies
         run: |
           flutter pub get
           flutter clean
           flutter pub get
 
-      # 4. إعادة توليد هيكل أندرويد نقي ومعياري
+      # 4. إعادة توليد هيكل أندرويد القياسي
       - name: Recreate Android Project
         run: |
           rm -rf android
           flutter create . --platforms=android --org=com.judeadaiy
 
-      # 5. الحل الجذري: حقن ملف build.gradle الرئيسي مع تضمين محرك فلاتر بالكامل
+      # 5. حقن ملف local.properties بالمسارات القياسية للسيرفر
+      - name: Configure Android SDK Properties
+        run: |
+          cat << 'EOF' > android/local.properties
+          sdk.dir=/usr/local/lib/android/sdk
+          flutter.sdk=/opt/hostedtoolcache/flutter/stable-3.22.0-x64/flutter
+          flutter.compileSdkVersion=34
+          flutter.minSdkVersion=23
+          flutter.targetSdkVersion=34
+          flutter.versionCode=1
+          flutter.versionName=1.0.0
+          EOF
+
+      # 6. كتابة ملف build.gradle الرئيسي (Master) المتوافق مع الفلاتر الحديث والمكتبات
       - name: Inject Correct Master build.gradle
         run: |
           cat << 'EOF' > android/build.gradle
@@ -73,19 +86,42 @@ jobs:
           }
           EOF
 
-      # 6. حقن ملف build.gradle الخاص بالتطبيق الداخلي لربط الخصائص بشكل آمن
+      # 7. كتابة ملف أندرويد للتطبيق (App build.gradle) بالطريقة القياسية الآمنة لـ 3.22.0
       - name: Inject Correct App build.gradle
         run: |
           cat << 'EOF' > android/app/build.gradle
           plugins {
               id "com.android.application"
               id "kotlin-android"
+              id "dev.flutter.flutter-gradle-plugin"
           }
-          apply from: "$flutterRoot/packages/flutter_tools/gradle/flutter.gradle"
-          
+
+          def localProperties = new Properties()
+          def localPropertiesFile = rootProject.file('local.properties')
+          if (localPropertiesFile.exists()) {
+              localPropertiesFile.withReader('UTF-8') { reader ->
+                  localProperties.load(reader)
+              }
+          }
+
+          def flutterCompileSdkVersion = localProperties.getProperty('flutter.compileSdkVersion')
+          if (flutterCompileSdkVersion == null) {
+              flutterCompileSdkVersion = '34'
+          }
+
+          def flutterMinSdkVersion = localProperties.getProperty('flutter.minSdkVersion')
+          if (flutterMinSdkVersion == null) {
+              flutterMinSdkVersion = '23'
+          }
+
+          def flutterTargetSdkVersion = localProperties.getProperty('flutter.targetSdkVersion')
+          if (flutterTargetSdkVersion == null) {
+              flutterTargetSdkVersion = '34'
+          }
+
           android {
               namespace "com.judeadaiy.chat_app"
-              compileSdkVersion 34
+              compileSdkVersion flutterCompileSdkVersion.toInteger()
               
               compileOptions {
                   sourceCompatibility JavaVersion.VERSION_17
@@ -96,8 +132,8 @@ jobs:
               }
               defaultConfig {
                   applicationId "com.judeadaiy.chat_app"
-                  minSdkVersion 23
-                  targetSdkVersion 34
+                  minSdkVersion flutterMinSdkVersion.toInteger()
+                  targetSdkVersion flutterTargetSdkVersion.toInteger()
                   versionCode 1
                   versionName "1.0.0"
               }
@@ -107,22 +143,9 @@ jobs:
                   }
               }
           }
-          flutter {
-              source '../..'
-          }
           EOF
 
-      # 7. حقن ملف الخصائص لتأكيد مسار الفلاتر
-      - name: Configure Android SDK Properties
-        run: |
-          cat << 'EOF' > android/local.properties
-          flutter.sdk=/opt/hostedtoolcache/flutter/stable-3.22.0-x64/flutter
-          flutter.compileSdkVersion=34
-          flutter.minSdkVersion=23
-          flutter.targetSdkVersion=34
-          EOF
-
-      # 8. ضبط ملف المانيفست بالصلاحيات الصحيحة
+      # 8. ضبط ملف المانيفست بالصلاحيات الكاملة لتطبيق الشات
       - name: Fix Android Manifest File
         run: |
           cat << 'EOF' > android/app/src/main/AndroidManifest.xml
@@ -160,20 +183,21 @@ jobs:
           </manifest>
           EOF
 
-      # 9. تفعيل دعم أندرويد إكس والـ Jetifier للمكتبات الخارجية
+      # 9. تفعيل دعم أندرويد إكس لتوافق مكتبات فحص الشبكة والصوت
       - name: Ensure AndroidX Properties
         run: |
           echo "android.useAndroidX=true" > android/gradle.properties
           echo "android.enableJetifier=true" >> android/gradle.properties
 
-      # 10. أمر البناء النهائي النظيف للـ APK
+      # 10. أمر البناء النهائي الصافي
       - name: Build APK Release
         run: |
           flutter build apk --release --no-tree-shake-icons --target-platform android-arm,android-arm64,android-x64
 
-      # 11. رفع ملف الـ APK الناتج للتحميل المباشر
+      # 11. رفع ملف الـ APK الناتج للتحميل فوراً
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: App-ChatApp-Release
           path: build/app/outputs/flutter-apk/app-release.apk
+
