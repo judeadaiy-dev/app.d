@@ -1,4 +1,4 @@
-name: Strict Native Overwrite & Build
+name: Force Strict Overwrite & Build APK
 
 on:
   push:
@@ -21,7 +21,7 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      # 2. تهيئة محرك فلاتر المستقر
+      # 2. تهيئة محرك فلاتر المستقر (بدون كاش نهائياً)
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
@@ -37,22 +37,32 @@ jobs:
             touch assets/images/app_logo.png
           fi
 
-      # 4. جلب مكاتب المشروع
-      - name: Install Dependencies
-        run: flutter pub get
+      # 4. جلب مكاتب المشروع مع تصفية الكاش
+      - name: Clean and Install Dependencies
+        run: |
+          flutter pub get
+          flutter clean
+          flutter pub get
 
-      # 5. خطوة التوليد اليدوي لملف الجرادل التنفيذي الناقص
-      - name: Download Missing Gradle Wrapper Jar
+      # 5. تنظيف كاش الأندرويد الداخلي بعنف ومسح المجلدات المؤقتة القديمة
+      - name: Hard Clean Android Cache
+        run: |
+          rm -rf android/.gradle
+          rm -rf android/app/build
+          rm -f android/local.properties
+
+      # 6. جلب ملف الجرادل التنفيذي الأصلي مباشرة من السيرفر لضمان سلامته
+      - name: Download Pure Gradle Wrapper Jar
         run: |
           mkdir -p android/gradle/wrapper
           curl -Lo android/gradle/wrapper/gradle-wrapper.jar https://github.com/gradle/gradle/raw/v8.0.2/gradle/wrapper/gradle-wrapper.jar
 
-      # 6. إعطاء صلاحية التشغيل لملف gradlew
+      # 7. إعطاء صلاحية التشغيل لملف الـ gradlew اليدوي
       - name: Give Permission to Custom Gradlew
         run: chmod +x android/gradlew
 
-      # 7. ⚠️ فرض وصناعة ملف MainActivity سليم وصارم ليتخطى خطأ الـ Unresolved تماماً
-      - name: Force Overwrite MainActivity with Pure Flutter Bridge
+      # 8. 🚨 فرض كتابة ملف الـ MainActivity القياسي من السيرفر ليتخطى الخطأ مجبراً
+      - name: Force Overwrite MainActivity
         run: |
           mkdir -p android/app/src/main/kotlin/com/judeadaiy/chat_app
           cat << 'EOF' > android/app/src/main/kotlin/com/judeadaiy/chat_app/MainActivity.kt
@@ -64,7 +74,7 @@ jobs:
           }
           EOF
 
-      # 8. بناء جسر الـ SDK والجرادل ليرتبط بملف الـ settings.gradle
+      # 9. بناء جسر الـ SDK والجرادل ليرتبط بملف الـ settings.gradle الجديد
       - name: Configure Android SDK & Gradle Bridge
         run: |
           cat << 'EOF' > android/local.properties
@@ -75,13 +85,13 @@ jobs:
           flutter.targetSdkVersion=34
           EOF
 
-      # 9. أمر البناء المباشر والنهائي (تنظيف كامل وبناء صارم)
+      # 10. أمر البناء النهائي الصارم والمباشر
       - name: Build APK Release
         run: |
           cd android && ./gradlew clean && cd ..
           flutter build apk --release --no-tree-shake-icons --target-platform android-arm,android-arm64,android-x64
 
-      # 10. رفع واستخراج الـ APK الجاهز تماماً للتثبيت
+      # 11. رفع واستخراج الـ APK الجاهز تماماً للتثبيت
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
