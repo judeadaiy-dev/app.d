@@ -47,29 +47,40 @@ jobs:
             touch assets/fonts/Cairo-SemiBold.ttf
           fi
 
-      # 4. مسح المجلد القديم التالف تماماً لضمان النظافة
+      # 4. مسح المجلد القديم لضمان النظافة الكاملة
       - name: Nuke Old Android Directory
         run: rm -rf android
 
-      # 5. التوليد الرسمي والنظيف للأندرويد الحديث
+      # 5. التوليد الرسمي والنظيف لمجلد الأندرويد الحديث
       - name: Core Flutter Android Generation
         run: flutter create . --platforms android --org com.judeadaiy
 
-      # 6. تطهير كاش فلاتر وتحميل المكاتب المقفلة المستقرة
+      # 6. تطهير كاش فلاتر وتحميل المكاتب المستقرة
       - name: Purge Flutter Cache & Fresh Pub Get
         run: |
           flutter pub cache clean -f
           flutter pub get
 
-      # 7. تشغيل أداة الأيقونات لتوليد أيقونة الأندرويد الرسمية
+      # 7. 🚨 الحل الرسمي والنظيف: تمرير إصدارات الـ SDK المتوافقة عبر قيم البيئة الرسمية للأندرويد
+      - name: Inject Target SDK Configuration
+        run: |
+          cat << 'EOF' > android/local.properties
+          sdk.dir=/usr/local/lib/android/sdk
+          flutter.sdk=/opt/hostedtoolcache/flutter/stable-3.22.0-x64/flutter
+          flutter.compileSdkVersion=34
+          flutter.minSdkVersion=23
+          flutter.targetSdkVersion=34
+          EOF
+
+      # 8. تشغيل أداة الأيقونات لتوليد أيقونة الأندرويد الرسمية
       - name: Run Launcher Icons Generator
         run: flutter pub run flutter_launcher_icons
 
-      # 8. البناء الرسمي والمباشر للـ APK
+      # 9. البناء الرسمي والمباشر للـ APK
       - name: Build APK Release
         run: flutter build apk --release --no-tree-shake-icons --target-platform android-arm,android-arm64,android-x64
           
-      # 9. رفع ملف الـ APK النهائي
+      # 10. رفع ملف الـ APK النهائي للتحميل المباشر
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
