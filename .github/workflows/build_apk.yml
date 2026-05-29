@@ -1,4 +1,4 @@
-name: The Final Decisive Build
+name: The Final Decisive Build (Chat App)
 
 on:
   push:
@@ -42,7 +42,7 @@ jobs:
           rm -rf android
           flutter create . --platforms=android --org=com.judeadaiy
 
-      # 5. الضربة القاضية: إجبار السيرفر على استخدام Gradle 8.0 بدلاً من 7.6.3
+      # 5. إجبار السيرفر على استخدام Gradle 8.0 بدلاً من 7.6.3
       - name: Force Gradle 8.0 Wrapper
         run: |
           mkdir -p android/gradle/wrapper
@@ -104,7 +104,7 @@ jobs:
           }
           EOF
 
-      # 8. حقن ملف التطبيق الداخلي المتوافق مع الإصدار 8.0 (استخدام compileSdk الحديثة)
+      # 8. حقن ملف التطبيق الداخلي المتوافق مع الإصدار 8.0 ومع اسم الحزمة الصحيح
       - name: Inject App build.gradle
         run: |
           cat << 'EOF' > android/app/build.gradle
@@ -138,7 +138,7 @@ jobs:
           }
           EOF
 
-      # 9. تأمين مسارات الـ SDK لكي لا تتوه المكتبات
+      # 9. تأمين مسارات الـ SDK لكي لا تتوه المكتبات الخارجية
       - name: Configure Android SDK Properties
         run: |
           cat << 'EOF' > android/local.properties
@@ -149,13 +149,26 @@ jobs:
           flutter.targetSdkVersion=34
           EOF
 
-      # 10. تفعيل دعم AndroidX
+      # 10. تفعيل دعم AndroidX والـ Jetifier لتوافقية المكتبات
       - name: Ensure AndroidX Properties
         run: |
           echo "android.useAndroidX=true" > android/gradle.properties
           echo "android.enableJetifier=true" >> android/gradle.properties
 
-      # 11. إضافة جميع الصلاحيات اللازمة لتطبيق الدردشة (صوت، كاميرا، تخزين)
+      # 11. حقن ملف MainActivity.kt في مساره البرمجي الصحيح تماماً لاسم حزمتك
+      - name: Fix and Inject MainActivity Kotlin File
+        run: |
+          mkdir -p android/app/src/main/kotlin/com/judeadaiy/chat_app
+          cat << 'EOF' > android/app/src/main/kotlin/com/judeadaiy/chat_app/MainActivity.kt
+          package com.judeadaiy.chat_app
+
+          import io.flutter.embedding.android.FlutterActivity
+
+          class MainActivity: FlutterActivity() {
+          }
+          EOF
+
+      # 12. إصلاح المانيفست بالصلاحيات الكاملة لتطبيق الشات والاسم التجاري SeaChat
       - name: Fix Android Manifest File
         run: |
           cat << 'EOF' > android/app/src/main/AndroidManifest.xml
@@ -167,7 +180,7 @@ jobs:
               <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
               <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
               <application
-                  android:label="Chat App"
+                  android:label="SeaChat"
                   android:name="${applicationName}"
                   android:icon="@mipmap/ic_launcher">
                   <meta-data
@@ -193,14 +206,14 @@ jobs:
           </manifest>
           EOF
 
-      # 12. أمر البناء النهائي النظيف للـ APK
+      # 13. أمر البناء النهائي الصافي لاستخراج الـ APK
       - name: Build APK Release
         run: |
           flutter build apk --release --no-tree-shake-icons --target-platform android-arm,android-arm64,android-x64
 
-      # 13. استخراج الجوهرة ورفع الـ APK للتحميل
+      # 14. رفع الجوهرة للتحميل المباشر بمسارها الصحيح للمشروع الحالي
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: App-ChatApp-Release
+          name: SeaChat-Release-APK
           path: build/app/outputs/flutter-apk/app-release.apk
