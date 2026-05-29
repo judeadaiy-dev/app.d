@@ -14,7 +14,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 1. تثبيت الجافا المتوافقة مع الكوتلن الحديث ومكاتب الصوت والـ Firebase
+      # 1. تثبيت الجافا المتوافقة
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
@@ -29,7 +29,7 @@ jobs:
           channel: 'stable'
           cache: false
 
-      # 3. تأمين مسارات الخطوط والصور لعدم توقف البناء (توليد ملفات وهمية إن لم توجد)
+      # 3. تأمين مسارات الخطوط والصور لعدم توقف البناء
       - name: Secure Fonts and Assets Directory
         run: |
           mkdir -p assets/images
@@ -47,7 +47,7 @@ jobs:
             touch assets/fonts/Cairo-SemiBold.ttf
           fi
 
-      # 4. 🚨 تدمير مجلد أندرويد القديم بالكامل لقطع الشك باليقين
+      # 4. تدمير مجلد أندرويد القديم بالكامل لقطع الشك باليقين
       - name: Nuke Old Android Directory
         run: rm -rf android
 
@@ -57,7 +57,7 @@ jobs:
           flutter create . --platforms android --org com.judeadaiy
           flutter pub get
 
-      # 6. 🚨 التعديل السحري: حقن قيم البناء قبل أي عملية ترجمة للمكاتب الخارجية ليتخطى فخ connectivity_plus
+      # 6. حقن قيم البناء قبل أي عملية ترجمة للمكاتب الخارجية
       - name: Configure Android SDK & Gradle Bridge Explicitly
         run: |
           cat << 'EOF' > android/local.properties
@@ -102,12 +102,12 @@ jobs:
           include ":app"
           EOF
 
-      # 8. تشغيل أداة توليد الأيقونات لتقوم بحقن أيقونة SeaChat داخل المجلد النظيف تلقائياً
-      - name: Generate Launcher Icons
+      # 8. 🚨 تشغيل الأداة للأندرويد فقط لمنع انهيار الـ iOS المفقود
+      - name: Generate Launcher Icons for Android Only
         run: |
-          flutter pub run flutter_launcher_icons
+          flutter pub run flutter_launcher_icons -f pubspec.yaml
 
-      # 9. أمر البناء النهائي الصارم لإخراج الـ APK رغماً عن أنف الكاش
+      # 9. أمر البناء النهائي الصارم لإخراج الـ APK
       - name: Build APK Release
         run: |
           cd android && ./gradlew clean && cd ..
