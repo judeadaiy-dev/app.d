@@ -1,4 +1,4 @@
-name: Ultimate Strict Overwrite & Build APK
+name: Pure UI Build Bypass
 
 on:
   push:
@@ -14,7 +14,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 1. تثبيت الجافا المتوافقة
+      # 1. تثبيت الجافا المستقرة
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
@@ -29,7 +29,7 @@ jobs:
           channel: 'stable'
           cache: false
 
-      # 3. تأمين مسارات الموارد لـ pubspec لمنع أي توقف
+      # 3. تأمين مسارات الموارد
       - name: Secure Assets and Icon
         run: |
           mkdir -p assets/images
@@ -37,14 +37,14 @@ jobs:
             touch assets/images/app_logo.png
           fi
 
-      # 4. 🚨 الأمر الصارم: تدمير مجلد أندرويد القديم المعطوب وصناعة مجلد رسمي ونظيف 100%
-      - name: Nuke Old Android Files & Regenerate Clean Structure
+      # 4. تدمير المجلد القديم وتوليد بنية نظيفة تتوافق مع الـ UI فقط
+      - name: Nuke Android & Regenerate for UI Test
         run: |
           rm -rf android
           flutter create . --platforms android
           flutter pub get
 
-      # 5. بناء جسر الـ SDK والجرادل ليرتبط بالهيكلية الجديدة تلقائياً
+      # 5. ربط الـ SDK بالأندرويد الجديد
       - name: Configure Android SDK & Gradle Bridge
         run: |
           cat << 'EOF' > android/local.properties
@@ -55,14 +55,14 @@ jobs:
           flutter.targetSdkVersion=34
           EOF
 
-      # 6. أمر البناء النهائي والمباشر لإنتاج الـ APK رغماً عن الأخطاء القديمة
+      # 6. البناء السريع والصارم للـ APK
       - name: Build APK Release
         run: |
           flutter build apk --release --no-tree-shake-icons --target-platform android-arm,android-arm64,android-x64
 
-      # 7. استخراج ورفع ملف تطبيق SeaChat النهائي لتثبيته فوراً على جوالك
+      # 7. استخراج التطبيق الجاهز للتثبيت ورؤية الواجهات
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: SeaChat-Release-APK
+          name: SeaChat-UI-Test-APK
           path: build/app/outputs/flutter-apk/app-release.apk
