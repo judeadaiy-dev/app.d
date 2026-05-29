@@ -21,7 +21,7 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      # 2. تهيئة محرك فلاتر المستقر
+      # 2. تهيئة محرك فلاتر المستقر لعام 2026
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
@@ -29,7 +29,7 @@ jobs:
           channel: 'stable'
           cache: false
 
-      # 3. تأمين مسارات الموارد والخطوط
+      # 3. تأمين مسارات الموارد والخطوط الجديدة
       - name: Secure Fonts and Assets Directory
         run: |
           mkdir -p assets/images
@@ -47,21 +47,21 @@ jobs:
             touch assets/fonts/Cairo-SemiBold.ttf
           fi
 
-      # 4. مسح المجلد القديم لضمان النظافة الكاملة
+      # 4. مسح المجلد القديم بالكامل للتخلص من أي بقايا تالفة
       - name: Nuke Old Android Directory
         run: rm -rf android
 
-      # 5. التوليد الرسمي لمجلد الأندرويد الحديث
+      # 5. التوليد الرسمي لمجلد الأندرويد من الصفر (باسم الحزمة المطابق للنظام النظيف)
       - name: Core Flutter Android Generation
-        run: flutter create . --platforms android --org com.judeadaiy
+        run: flutter create . --platforms android --org com.judeadaiy.op
 
-      # 6. تطهير كاش فلاتر وتحميل المكاتب المستقرة
+      # 6. تطهير كاش فلاتر وتحميل المكاتب الحديثة
       - name: Purge Flutter Cache & Fresh Pub Get
         run: |
           flutter pub cache clean -f
           flutter pub get
 
-      # 7. ترقية نظام الجرادل الفرعي (Settings) ليتوافق مع كوتلن الحديث
+      # 7. ترقية نظام الجرادل الفرعي (Settings) ليتوافق مع كوتلن الحديث 1.8.22
       - name: Blueprint Android Settings Gradle
         run: |
           cat << 'EOF' > android/settings.gradle
@@ -97,7 +97,7 @@ jobs:
           include ":app"
           EOF
 
-      # 8. تحديث ملف الـ build.gradle الخاص بالتطبيق لفرض نظام الـ SDK الحديث
+      # 8. تحديث ملف الـ build.gradle الجديد ليفحص الـ SDK ويحدد minSdk 23 المطلوبة لمكتبة الصوت
       - name: Blueprint App Build Gradle
         run: |
           cat << 'EOF' > android/app/build.gradle
@@ -108,7 +108,7 @@ jobs:
           }
 
           android {
-              namespace "com.judeadaiy.op"
+              namespace "com.judeadaiy.op.chat_app"
               compileSdk = 34
 
               compileOptions {
@@ -121,7 +121,7 @@ jobs:
               }
 
               defaultConfig {
-                  applicationId "com.judeadaiy.op"
+                  applicationId "com.judeadaiy.op.chat_app"
                   minSdk = 23
                   targetSdk = 34
                   versionCode = 1
@@ -136,7 +136,7 @@ jobs:
           }
           EOF
 
-      # 9. 🚨 الحل الحاسم: تحديث إصدار الـ Gradle Wrapper لنسخة 8.0 المستقرة والمتوافقة
+      # 9. ترقية الـ Gradle Wrapper ليتوافق مع الأدوات الحديثة ويمنع خطأ الإصدارات
       - name: Upgrade Gradle Wrapper Version
         run: |
           cat << 'EOF' > android/gradle/wrapper/gradle-wrapper.properties
@@ -147,16 +147,16 @@ jobs:
           distributionUrl=https\://services.gradle.org/distributions/gradle-8.0-all.zip
           EOF
 
-      # 10. تشغيل أداة الأيقونات الرسمية
+      # 10. تشغيل أداة الأيقونات لتوليد أيقونة الأندرويد الرسمية للمشروع الجديد
       - name: Run Launcher Icons Generator
         run: flutter pub run flutter_launcher_icons
 
-      # 11. البناء المباشر للـ APK النظيف تماماً
+      # 11. البناء الرسمي والمباشر للـ APK بدون ترقيعات
       - name: Build APK Release
         run: |
           flutter build apk --release --no-tree-shake-icons --target-platform android-arm,android-arm64,android-x64
           
-      # 12. رفع ملف الـ APK النهائي للتحميل
+      # 12. رفع ملف الـ APK النهائي النظيف تماماً للتحميل
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
