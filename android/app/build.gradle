@@ -31,3 +31,9 @@ android {
         }
     }
 }
+
+dependencies {
+    // المكاتب الرسمية لتعريف ألوان وثيمات الأندرويد الأساسية في السيرفر
+    implementation "androidx.appcompat:appcompat:1.6.1"
+    implementation "com.google.android.material:material:1.9.0"
+}
