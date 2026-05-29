@@ -1,4 +1,4 @@
-name: The Ultimate Decisive Clean Build
+name: The Manual-Driven Decisive Build
 
 on:
   push:
@@ -14,7 +14,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 1. تثبيت بيئة الجافا المستقرة
+      # 1. تثبيت بيئة الجافا المستقرة المتوافقة مع تعديلاتك يدوياً
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
@@ -29,21 +29,15 @@ jobs:
           channel: 'stable'
           cache: false
 
-      # 3. جلب الحزم وتنظيف الكاش بالكامل
+      # 3. جلب كافة حزم ومكتبات تطبيق الشات والـ Firebase
       - name: Install Dependencies
         run: |
           flutter pub get
           flutter clean
           flutter pub get
 
-      # 4. بناء مجلد أندرويد نقي من الصفر باستخدام لغة جافا القياسية لتفادي مشاكل المترجم
-      - name: Recreate Safe Android Skeleton
-        run: |
-          rm -rf android
-          flutter create . --platforms=android --org=com.judeadaiy -a java
-
-      # 5. إجبار السيرفر على استخدام Gradle 8.0 ليتوافق مع الحزم الحديثة
-      - name: Force Gradle 8.0 Wrapper
+      # 4. ترقية الجرادل تلقائياً إلى 8.0 ليتوافق مع تعديلات الـ SDK 34 اليدوية التي وضعتها
+      - name: Inject Gradle 8.0 Wrapper
         run: |
           mkdir -p android/gradle/wrapper
           cat << 'EOF' > android/gradle/wrapper/gradle-wrapper.properties
@@ -54,162 +48,23 @@ jobs:
           distributionUrl=https\://services.gradle.org/distributions/gradle-8.0-all.zip
           EOF
 
-      # 6. حقن ملف settings.gradle الرئيسي لتعريف الـ Plugins للمكتبات الخارجية
-      - name: Inject Master settings.gradle
-        run: |
-          cat << 'EOF' > android/settings.gradle
-          pluginManagement {
-              def flutterSdkPath = {
-                  def properties = new Properties()
-                  def propertiesFile = new File(settingsDir, 'local.properties')
-                  if (propertiesFile.exists()) {
-                      propertiesFile.withReader('UTF-8') { reader -> properties.load(reader) }
-                  }
-                  def sdkPath = properties.getProperty('flutter.sdk')
-                  assert sdkPath != null, "flutter.sdk not set in local.properties"
-                  return sdkPath
-              }()
-              includeBuild "$flutterSdkPath/packages/flutter_tools/gradle"
-              repositories {
-                  google()
-                  mavenCentral()
-                  gradlePluginPortal()
-              }
-          }
-          plugins {
-              id "dev.flutter.flutter-gradle-plugin" version "1.0.0" apply false
-              id "com.android.application" version "8.0.2" apply false
-          }
-          include ":app"
-          EOF
-
-      # 7. حقن ملف البناء build.gradle الرئيسي لتهيئة المسارات العامة
-      - name: Inject Master build.gradle
-        run: |
-          cat << 'EOF' > android/build.gradle
-          allprojects {
-              repositories {
-                  google()
-                  mavenCentral()
-              }
-          }
-          rootProject.buildDir = '../build'
-          subprojects {
-              project.buildDir = "${rootProject.buildDir}/${project.name}"
-              project.evaluationDependsOn(':app')
-          }
-          tasks.register("clean", Delete) {
-              delete rootProject.buildDir
-          }
-          EOF
-
-      # 8. حقن ملف بناء التطبيق الداخلي المتوافق مع الإصدار الحديث واسم الحزمة com.judeadaiy.chat_app
-      - name: Inject App build.gradle
-        run: |
-          cat << 'EOF' > android/app/build.gradle
-          plugins {
-              id "com.android.application"
-              id "dev.flutter.flutter-gradle-plugin"
-          }
-          android {
-              namespace "com.judeadaiy.chat_app"
-              compileSdk 34
-              compileOptions {
-                  sourceCompatibility JavaVersion.VERSION_17
-                  targetCompatibility JavaVersion.VERSION_17
-              }
-              defaultConfig {
-                  applicationId "com.judeadaiy.chat_app"
-                  minSdk 23
-                  targetSdk 34
-                  versionCode 1
-                  versionName "1.0.0"
-              }
-              buildTypes {
-                  release {
-                      signingConfig signingConfigs.debug
-                  }
-              }
-          }
-          EOF
-
-      # 9. تأمين مسارات الـ SDK لضمان استقرار السيرفر وفلاتر
-      - name: Configure Android SDK Properties
+      # 5. ربط محرك فلاتر بملف الـ local.properties الخاص بالسيرفر دون لمس بقية الإعدادات
+      - name: Configure Android SDK Path for Server
         run: |
           cat << 'EOF' > android/local.properties
           sdk.dir=/usr/local/lib/android/sdk
           flutter.sdk=/opt/hostedtoolcache/flutter/stable-3.22.0-x64/flutter
-          flutter.compileSdkVersion=34
-          flutter.minSdkVersion=23
-          flutter.targetSdkVersion=34
           EOF
 
-      # 10. تفعيل دعم AndroidX والـ Jetifier للمكتبات الخارجية تماماً
-      - name: Ensure AndroidX Properties
-        run: |
-          echo "android.useAndroidX=true" > android/gradle.properties
-          echo "android.enableJetifier=true" >> android/gradle.properties
-
-      # 11. حقن وتأمين ملف MainActivity.java القياسي المستقر لإنهاء مشكلة التراكم والتعارض
-      - name: Inject Clean MainActivity Java File
-        run: |
-          rm -rf android/app/src/main/kotlin
-          mkdir -p android/app/src/main/java/com/judeadaiy/chat_app
-          cat << 'EOF' > android/app/src/main/java/com/judeadaiy/chat_app/MainActivity.java
-          package com.judeadaiy.chat_app;
-
-          import io.flutter.embedding.android.FlutterActivity;
-
-          public class MainActivity extends FlutterActivity {
-          }
-          EOF
-
-      # 12. تصفية وإصلاح ملف المانيفست بالكامل مع إعطاء كافة صلاحيات تطبيق الدردشة الشاملة
-      - name: Fix Android Manifest File
-        run: |
-          cat << 'EOF' > android/app/src/main/AndroidManifest.xml
-          <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-              package="com.judeadaiy.chat_app">
-              <uses-permission android:name="android.permission.INTERNET"/>
-              <uses-permission android:name="android.permission.RECORD_AUDIO" />
-              <uses-permission android:name="android.permission.CAMERA" />
-              <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-              <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-              <application
-                  android:label="SeaChat"
-                  android:name="${applicationName}"
-                  android:icon="@mipmap/ic_launcher">
-                  <meta-data
-                      android:name="flutterEmbedding"
-                      android:value="2" />
-                  <activity
-                      android:name="com.judeadaiy.chat_app.MainActivity"
-                      android:exported="true"
-                      android:launchMode="singleTop"
-                      android:theme="@style/LaunchTheme"
-                      android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|screenLayout|density|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
-                      android:hardwareAccelerated="true"
-                      android:windowSoftInputMode="adjustResize">
-                      <meta-data
-                          android:name="io.flutter.embedding.android.NormalTheme"
-                          android:resource="@style/NormalTheme" />
-                      <intent-filter>
-                          <action android:name="android.intent.action.MAIN"/>
-                          <category android:name="android.intent.category.LAUNCHER"/>
-                      </intent-filter>
-                  </activity>
-              </application>
-          </manifest>
-          EOF
-
-      # 13. أمر البناء النهائي الصافي والقاطع لاستخراج الـ APK
+      # 6. جعل فلاتر يقوم ببناء وتوليد وتكملة المجلد اعتماداً على ملفاتك اليدوية الثابتة
       - name: Build APK Release
         run: |
           flutter build apk --release --no-tree-shake-icons --target-platform android-arm,android-arm64,android-x64
 
-      # 14. رفع الجوهرة للتحميل المباشر بمسارها الصحيح
+      # 7. استخراج ورفع الـ APK النهائي الجاهز للتشغيل والتثبيت
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: SeaChat-Release-APK
           path: build/app/outputs/flutter-apk/app-release.apk
+
