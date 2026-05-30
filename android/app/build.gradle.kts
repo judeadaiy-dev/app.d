@@ -18,12 +18,12 @@ android {
     }
 
     compileOptions {
-        coreLibraryDesugaringEnabled = true
+        // نستخدم الطريقة البديلة المباشرة
+        isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
 
-    // التحديث الجوهري هنا ليتوافق مع معيار AGP 9.0+
     kotlin {
         compilerOptions {
             jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
@@ -32,5 +32,6 @@ android {
 }
 
 dependencies {
+    // تأكدنا من صيغة الـ dependencies الصحيحة لـ kts
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
 }
