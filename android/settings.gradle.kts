@@ -1,4 +1,4 @@
-pluginManagement {
+PluginManagement {
     val flutterSdkPath =
         run {
             val properties = java.util.Properties()
@@ -16,11 +16,9 @@ pluginManagement {
         gradlePluginPortal()
     }
 }
-
 plugins {
     id("dev.flutter.flutter-plugin-loader") version "1.0.0"
-    id("com.android.application") version "9.0.1" apply false
-    id("org.jetbrains.kotlin.android") version "2.3.20" apply false
+    // نغير الإصدار إلى 8.8.1 أو 8.9.0 لضمان التوافق التام مع Flutter 3.44.0
+    id("com.android.application") version "8.8.1" apply false
+    id("org.jetbrains.kotlin.android") version "2.0.0" apply false
 }
-
-include(":app")
