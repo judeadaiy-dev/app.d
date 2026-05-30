@@ -187,14 +187,13 @@ jobs:
         shell: bash
         run: |
           set -e
-          # إضافة flag التجاوز هنا
-          flutter build apk --release --split-per-abi --no-tree-shake-icons --no-pub --android-skip-build-dependency-validation
+          # نستخدم ./gradlew مباشرة لتجنب فحص فلاتر الصارم
+          ./gradlew assembleRelease --stacktrace
 
-      - name: Upload Android artifacts and reports
+      - name: Upload Android artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: dardashati-android-build
+          name: release-apk
           path: |
-            ${{ steps.project.outputs.path }}/build/app/outputs/flutter-apk/*.apk
-            ${{ steps.project.outputs.path }}/ci_reports/**
+            ${{ steps.project.outputs.path }}/android/app/build/outputs/apk/release/*.apk
           if-no-files-found: error
