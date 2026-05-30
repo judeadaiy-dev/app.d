@@ -21,15 +21,24 @@ jobs:
         with:
           channel: 'stable'
           
-      - name: Build
+      - name: Build APK
         run: |
           flutter clean
           flutter pub get
-          flutter build apk --release --split-per-abi
-          
+          # إضافة flag لتجاوز تحذيرات الـ Gradle التي تعيق العملية
+          flutter build apk --release --split-per-abi --android-skip-build-dependency-validation
+
+      - name: Locate and Move APK
+        run: |
+          mkdir -p final_apk
+          # هذا الأمر لا يعتمد على المسار الافتراضي، بل يمسح مجلد build بالكامل
+          # ويجد أي ملف APK ويضعه في مجلد final_apk
+          find build -name "*.apk" -exec cp {} final_apk/ \;
+          ls -R final_apk/
+
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: release-apks
-          # هذا هو المسار الذي يضع فيه Flutter ملفات الـ APK عادةً
-          path: build/app/outputs/flutter-apk/MyFinalApp.apk
+          path: final_apk/
+
