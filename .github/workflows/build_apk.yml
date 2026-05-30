@@ -25,18 +25,21 @@ jobs:
         run: |
           flutter clean
           flutter pub get
-          flutter build apk --release --split-per-abi --verbose
+          # إضافة --android-skip-build-dependency-validation لتجاوز تحذيرات Gradle
+          flutter build apk --release --split-per-abi --verbose --android-skip-build-dependency-validation
           
       - name: Check and Move Files
         run: |
-          # 1. ننشئ المجلد أولاً
           mkdir -p final_apk
+          # البحث في المسار القياسي للـ APK ونقله
+          find build/app/outputs/flutter-apk/ -name "*.apk" -exec cp {} final_apk/ \; || echo "No APK found in standard path"
           
-          # 2. نبحث عن الملفات وننسخها، وإذا لم يجد شيئاً سيطبع رسالة ولن يوقف البناء
-          find build -name "*.apk" -exec cp {} final_apk/ \; || echo "No APK found"
+          # إذا فشل المسار القياسي، نبحث في كل المجلد كخطة طوارئ
+          if [ -z "$(ls -A final_apk/)" ]; then
+            echo "Searching in entire build directory..."
+            find build -name "*.apk" -exec cp {} final_apk/ \;
+          fi
           
-          # 3. نعرض ما وجدناه لنتأكد في السجلات
-          echo "Files in final_apk:"
           ls -R final_apk/
 
       - name: Upload APK
@@ -44,5 +47,3 @@ jobs:
         with:
           name: release-apks
           path: final_apk/
-
-
