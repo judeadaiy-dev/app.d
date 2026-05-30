@@ -9,7 +9,7 @@ allprojects {
     repositories {
         google()
         mavenCentral()
-        maven { url = uri("https://jitpack.io") } // إضافة ضرورية لحل نقص الملفات
+        maven { url = uri("https://jitpack.io") }
     }
 }
 
