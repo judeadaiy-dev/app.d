@@ -26,3 +26,4 @@ plugins {
     id("org.jetbrains.kotlin.android") version "2.2.20" apply false
     id("dev.flutter.flutter-gradle-plugin") version "1.0.0" apply false
 }
+include(":app")
