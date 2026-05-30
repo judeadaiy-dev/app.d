@@ -31,5 +31,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: release-apks
-          # هذا السطر يبحث في كافة المجلدات الفرعية عن أي ملف APK ويرفعه
-          path: "**/*.apk"
+          # هذا المسار يبحث في المجلد الرئيسي build مباشرة
+          path: build/**/*.apk
