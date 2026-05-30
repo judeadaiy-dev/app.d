@@ -16,16 +16,17 @@ android {
         versionCode = 1
         versionName = "1.0.0"
         multiDexEnabled = true
+    }// احذف هذا الجزء تماماً من ملف build.gradle.kts
+/*
+applicationVariants.all {
+    val variant = this
+    variant.outputs.all {
+        val output = this as com.android.build.gradle.internal.api.BaseVariantOutputImpl
+        output.outputFileName = "MyFinalApp.apk"
     }
+}
+*/
 
-    // هنا قمنا بدمج إعدادات المسار داخل الـ android بشكل صحيح
-    applicationVariants.all {
-        val variant = this
-        variant.outputs.all {
-            val output = this as com.android.build.gradle.internal.api.BaseVariantOutputImpl
-            output.outputFileName = "MyFinalApp.apk"
-        }
-    }
 
     compileOptions {
         isCoreLibraryDesugaringEnabled = true
