@@ -1,12 +1,18 @@
-// إعدادات المستودعات الأساسية
-allprojects {
+buildscript {
     repositories {
         google()
         mavenCentral()
     }
 }
 
-// مسح المجلدات القديمة عند إعادة البناء
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+        maven { url = uri("https://jitpack.io") } // إضافة ضرورية لحل نقص الملفات
+    }
+}
+
 tasks.register<Delete>("clean") {
     delete(rootProject.layout.buildDirectory)
 }
