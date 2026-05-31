@@ -35,17 +35,19 @@ jobs:
       - name: Build APK
         env:
           GRADLE_OPTS: "-Xmx4g -Dorg.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=512m"
+        # تم تبسيط الأمر ليقوم ببناء ملف APK الافتراضي القياسي الشامل لجميع المعالجات
         run: |
           flutter config --no-enable-web
           flutter clean
           flutter pub get
-          flutter build apk --debug --target-platform android-arm64 --android-skip-build-dependency-validation
+          flutter build apk --debug --android-skip-build-dependency-validation
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: final-app
-          # 🌟 التعديل هنا: استخدام مسار عام مرن يبحث عن أي ملف apk تم إنتاجه داخل مجلد البناء
+          # البحث المتكامل في كل المجلدات الفرعية لضمان التقاط ملف الـ APK أينما وُضع
           path: |
             build/app/outputs/flutter-apk/*.apk
             build/app/outputs/apk/debug/*.apk
+            **/build/app/outputs/flutter-apk/*.apk
