@@ -26,7 +26,8 @@ dependencies:
   image_picker: ^1.0.7 # نسخة متوافقة مع SDK 34
   cached_network_image: ^3.3.1
   
-  intl: ^0.19.0
+    # عدلي سطر intl ليصبح هكذا تماماً:
+  intl: ^0.20.2
   timeago: ^3.5.0
   uuid: ^4.3.3
   
