@@ -21,3 +21,20 @@ allprojects {
 tasks.register<Delete>("clean") {
     delete(rootProject.layout.buildDirectory)
 }
+
+// الكود السحري بلغة كوتلين لإجبار مكتبات أندرويد الداخلية على التوافق مع إصدار 34
+subprojects {
+    configurations.all {
+        resolutionStrategy.eachDependency {
+            if (requested.group == "androidx.browser" && requested.name == "browser") {
+                useVersion("1.8.0")
+            }
+            if (requested.group == "androidx.activity") {
+                useVersion("1.8.2")
+            }
+            if (requested.group == "androidx.core") {
+                useVersion("1.12.0")
+            }
+        }
+    }
+}
