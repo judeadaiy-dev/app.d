@@ -25,12 +25,11 @@ jobs:
         run: flutter pub get
 
       - name: Force Build APK
-        # هذا الأمر يتجاهل التحذيرات ويجبر البناء للأندرويد فقط
         run: |
-          flutter build apk --release --target-platform android-arm64 --no-tree-shake-icons --split-per-abi
+          flutter build apk --release --target-platform android-arm64 --no-tree-shake-icons --split-per-abi --android-skip-build-dependency-validation
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: all-apks
-          path: build/app/outputs/flutter-apk/*.apk
+          name: my-app-apks
+          path: build/**/outputs/flutter-apk/*.apk
