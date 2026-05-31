@@ -5,7 +5,6 @@ on:
     branches: [ main ]
   workflow_dispatch:
 
-# إجبار حاوية البناء بالكامل على تخصيص ذاكرة كافية لجافا وكوتلين لمنع الـ OutOfMemoryError
 env:
   GRADLE_OPTS: "-Xmx4g -Dorg.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=512m"
 
@@ -34,7 +33,7 @@ jobs:
           flutter config --no-enable-web
           flutter clean
           flutter pub get
-          flutter build apk --debug --target-platform android-arm64 --android-skip-build-dependency-validation -Pandroid.injected.build.sdk=36
+          flutter build apk --debug --target-platform android-arm64 --android-skip-build-dependency-validation
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
