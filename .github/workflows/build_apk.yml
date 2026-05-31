@@ -26,6 +26,12 @@ jobs:
         with:
           channel: 'stable'
 
+      # 🌟 الخطوة الجديدة: توليد أيقونات الأندرويد بجميع المقاسات تلقائياً
+      - name: Generate Launcher Icons
+        run: |
+          flutter pub get
+          flutter pub run flutter_launcher_icons
+
       - name: Build APK
         env:
           GRADLE_OPTS: "-Xmx4g -Dorg.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=512m"
