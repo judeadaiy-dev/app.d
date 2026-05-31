@@ -5,17 +5,14 @@ plugins {
 }
 
 android {
-    namespace = "com.judeadaiy.chat_app"
-    compileSdk = 34 // تم التعديل
-    ndkVersion = "28.2.13676358"
+    // تحديث رقم التجميع والتعرف إلى الإصدار 36 المتوافق مع حزمك الحالية
+    compileSdk = 36 
 
     defaultConfig {
-        applicationId = "com.judeadaiy.chat_app"
-        minSdk = 23
-        targetSdk = 34 // تم التعديل
-        versionCode = 1
-        versionName = "1.0.0"
-        multiDexEnabled = true
+        // تحديد الإصدار المستهدف 36 ليتوافق مع تحديثات النظام ومكتبات أندرويد المستوردة
+        targetSdk = 36
+        
+        // ... الإعدادات الافتراضية الخاصة بك تترك هنا مثل applicationId و minSdkVersion
     }
 
     compileOptions {
@@ -29,7 +26,7 @@ android {
             jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
         }
     }
-}
+} // تم إغلاق قوس الـ android هنا بشكل برمجي صحيح
 
 dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
