@@ -45,13 +45,17 @@ jobs:
           flutter config --no-enable-web
           flutter clean
           flutter pub get
-          
-          # 🚀 الأمر الرسمي النظيف بدون أي خيارات تخطي تسبب انهيار المحرك
           flutter build apk --debug
           
-          # نقل الملف بقوة بعد أن يتم إنتاجه بنجاح
+          # 🎯 قوة نظام لينكس: البحث الشامل من جذور حاوية GitHub عن الـ APK المفقود ونقله
           mkdir -p my_output_apk
-          find build/ -name "*.apk" -exec cp {} my_output_apk/ \;
-          echo "تم إنتاج الملفات ونقلها بنجاح"
-          ls my_output_apk/
+          find /home/runner/work/ -name "*.apk" -exec cp {} my_output_apk/ \;
+          
+          echo "=== الملفات التي تم العثور عليها وقنصها ==="
+          ls -la my_output_apk/
 
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: final-app
+          path: my_output_apk/*.apk
