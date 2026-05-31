@@ -6,27 +6,17 @@ plugins {
 
 android {
     namespace = "com.judeadaiy.chat_app"
-    compileSdk = 36
+    compileSdk = 34 // تم التعديل
     ndkVersion = "28.2.13676358"
 
     defaultConfig {
         applicationId = "com.judeadaiy.chat_app"
         minSdk = 23
-        targetSdk = 36
+        targetSdk = 34 // تم التعديل
         versionCode = 1
         versionName = "1.0.0"
         multiDexEnabled = true
-    }// احذف هذا الجزء تماماً من ملف build.gradle.kts
-/*
-applicationVariants.all {
-    val variant = this
-    variant.outputs.all {
-        val output = this as com.android.build.gradle.internal.api.BaseVariantOutputImpl
-        output.outputFileName = "MyFinalApp.apk"
     }
-}
-*/
-
 
     compileOptions {
         isCoreLibraryDesugaringEnabled = true
