@@ -1,4 +1,4 @@
-name: Build APK
+name: Build APK Only
 
 on:
   push:
@@ -20,16 +20,15 @@ jobs:
         with:
           channel: 'stable'
 
-      - name: Clean and Get
+      - name: Build Android Only
+        # هنا القوة: نحن نحدد البناء للأندرويد فقط ونمنع أي شيء آخر
         run: |
-          flutter clean
+          flutter config --no-enable-web
           flutter pub get
-
-      - name: Build APK
-        run: flutter build apk --release --target-platform android-arm64 --no-tree-shake-icons
+          flutter build apk --release --target-platform android-arm64 --no-tree-shake-icons
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: release-apk
+          name: android-apk
           path: build/app/outputs/flutter-apk/app-release.apk
