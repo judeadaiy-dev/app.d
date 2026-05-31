@@ -12,46 +12,33 @@ dependencies:
   flutter_localizations:
     sdk: flutter
 
-  # State Management
   provider: ^6.1.2
-
-  # Backend
-  supabase_flutter: ^2.6.0
+  supabase_flutter: ^2.5.0 # إصدار أقدم قليلاً وأكثر استقراراً
   
-  # Firebase - للإشعارات Push Notifications
-  firebase_core: ^4.9.0
-  firebase_messaging: ^16.2.2
-  flutter_local_notifications: ^21.0.0
+  firebase_core: ^3.0.0
+  firebase_messaging: ^15.0.0
+  flutter_local_notifications: ^17.2.0
 
-  # UI & Theme
-  google_fonts: ^8.1.0
+  google_fonts: ^6.2.1
   glassmorphism: ^3.0.0
   flutter_animate: ^4.5.0
 
-  # Images & Files
-  image_picker: ^1.1.0
+  image_picker: ^1.0.7 # نسخة متوافقة مع SDK 34
   cached_network_image: ^3.3.1
   
-  # Utils
-  intl: ^0.20.2
-  timeago: ^3.6.1
+  intl: ^0.19.0
+  timeago: ^3.5.0
   uuid: ^4.3.3
   
-  # Permissions - للمايك والكاميرا والتخزين
-  permission_handler: ^12.0.2
+  permission_handler: ^11.0.1 # نسخة مستقرة لـ 34
+  record: ^5.1.0 # نسخة لا تطلب إصدارات أندرويد حديثة جداً
+  just_audio: ^0.9.36
   
-  # Audio Recording & Player 
-  record: ^7.0.0
-  just_audio: ^0.10.5
-  
-  # File Picker & Path
   file_picker: ^8.0.3
-  path_provider: ^2.1.3
-  
-  # Connectivity
-  connectivity_plus: ^7.1.1
+  path_provider: ^2.1.2
+  connectivity_plus: ^6.0.0
 
-# 🚨 الضربة القاضية: إجبار فلاتر على استخدام نسخة واجهة مستقرة قديمة متوافقة لا تطلب startStream
+# 🚨 الإبقاء على التجاوز الضروري
 dependency_overrides:
   record_platform_interface: 1.2.0
 
