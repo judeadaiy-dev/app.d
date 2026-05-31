@@ -45,4 +45,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: final-app
-          path: build/**/outputs/flutter-apk/*.apk
+          # 🌟 التعديل هنا: استخدام مسار عام مرن يبحث عن أي ملف apk تم إنتاجه داخل مجلد البناء
+          path: |
+            build/app/outputs/flutter-apk/*.apk
+            build/app/outputs/apk/debug/*.apk
