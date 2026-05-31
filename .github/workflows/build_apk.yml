@@ -28,11 +28,11 @@ jobs:
           channel: 'stable'
 
       - name: Build APK
-        # تمرير الذاكرة أيضاً داخل خطوة التشغيل لضمان استقرار البناء مع متغيرات البناء المخصصة
         env:
           GRADLE_OPTS: "-Xmx4g -Dorg.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=512m"
         run: |
           flutter config --no-enable-web
+          flutter clean
           flutter pub get
           flutter build apk --debug --target-platform android-arm64 --android-skip-build-dependency-validation -Pandroid.injected.build.sdk=36
 
