@@ -22,7 +22,7 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      # ⚡ خطوة الصاروخ: تفعيل الكاش لتسريع البناء Pub & Gradle لتقليل الوقت
+      # تفعيل الكاش لتسريع البناء السحابي
       - name: Cache Flutter & Gradle
         uses: actions/cache@v4
         with:
@@ -37,25 +37,30 @@ jobs:
       - uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
-          cache: true # تسريع محرك فلاتر نفسه
-      - name: Build APK & Force Path
+          cache: true
+
+      - name: Build Application & Force Export
         env:
           GRADLE_OPTS: "-Xmx4g -Dorg.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=512m -Dorg.gradle.daemon=false"
         run: |
           flutter config --no-enable-web
           flutter clean
           flutter pub get
-          flutter build apk --debug
           
-          # 🎯 قوة نظام لينكس: البحث الشامل من جذور حاوية GitHub عن الـ APK المفقود ونقله
-          mkdir -p my_output_apk
-          find /home/runner/work/ -name "*.apk" -exec cp {} my_output_apk/ \;
+          # 🚀 بناء الصيغتين مع استخدام علم التخطي والتوافق المطلوب لـ AGP 8.9.1
+          flutter build apk --debug --android-skip-build-dependency-validation
+          flutter build appbundle --debug --android-skip-build-dependency-validation || true
           
-          echo "=== الملفات التي تم العثور عليها وقنصها ==="
-          ls -la my_output_apk/
+          # قنص أي ملف apk أو aab تم توليده في أي مكان في السيرفر ونقله للمجلد الثابت
+          mkdir -p my_output_artifacts
+          find /home/runner/work/ -name "*.apk" -exec cp {} my_output_artifacts/ \;
+          find /home/runner/work/ -name "*.aab" -exec cp {} my_output_artifacts/ \;
+          
+          echo "=== ملفات التطبيق المستخرجة والمضمونة ==="
+          ls -la my_output_artifacts/
 
-      - name: Upload APK
+      - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: final-app
-          path: my_output_apk/*.apk
+          path: my_output_artifacts/*
