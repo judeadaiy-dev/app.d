@@ -5,14 +5,20 @@ plugins {
 }
 
 android {
-    // تثبيت البناء على الإصدار 34 الآمن والمتوافق تماماً مع حاوية GitHub الافتراضية
+    // 💡 هذا هو السطر السحري المطلوب لحل مشكلة الـ Namespace
+    // استبدل com.example.chatapp بمعرّف تطبيقك الفعلي إذا كان مختلفاً
+    namespace = "com.judeadaiy.chat_app"
+
     compileSdk = 34 
 
     defaultConfig {
-        // تحديد هدف النظام رقم 34 لضمان عمل التطبيق بكفاءة
-        targetSdk = 34
+        // تأكد من وجود نفس المعرّف هنا أيضاً
+        applicationId = "com.example.chatapp"
         
-        // هنا تترك الإعدادات الافتراضية الخاصة بك مثل applicationId و minSdkVersion و versionCode و versionName
+        targetSdk = 34
+        minSdk = 23
+        
+        // ... يمكنك ترك الـ versionCode والـ versionName كما هي لديك
     }
 
     compileOptions {
