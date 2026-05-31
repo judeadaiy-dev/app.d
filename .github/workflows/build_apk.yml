@@ -1,4 +1,4 @@
-name: Build APK
+name: Ultimate Build APK
 
 on:
   push:
@@ -9,7 +9,8 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout Code
+        uses: actions/checkout@v4
         with:
           submodules: false
       
@@ -22,15 +23,19 @@ jobs:
         with:
           channel: 'stable'
 
-      - name: Build APK
+      - name: Prepare and Build
         run: |
-          flutter config --no-enable-web
+          # تنظيف أي بقايا قديمة
+          flutter clean
+          # إعادة إنشاء هيكل الأندرويد لضمان التوافق
+          flutter create . 
+          # جلب المكتبات
           flutter pub get
-          flutter build apk --release --target-platform android-arm64 --android-skip-build-dependency-validation
+          # بناء التطبيق مع تجاوز التحقق من التبعيات
+          flutter build apk --debug --target-platform android-arm64 --android-skip-build-dependency-validation
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: final-apk
-          # نستخدم المسار العام للبحث عن أي ملف APK في مجلد البناء
+          name: final-app
           path: build/**/outputs/flutter-apk/*.apk
