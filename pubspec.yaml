@@ -11,40 +11,22 @@ dependencies:
     sdk: flutter
   flutter_localizations:
     sdk: flutter
-
-  # State Management
   provider: ^6.1.2
-
-  # Backend
   supabase_flutter: ^2.5.0
-  
-  # Firebase
   firebase_core: ^3.0.0
   firebase_messaging: ^15.0.0
   flutter_local_notifications: ^17.2.0
-
-  # UI & Theme
   google_fonts: ^6.2.1
   glassmorphism: ^3.0.0
   flutter_animate: ^4.5.0
-
-  # Images & Files
   image_picker: ^1.0.7
   cached_network_image: ^3.3.1
-  
-  # Utils
   intl: ^0.20.2
   timeago: ^3.5.0
   uuid: ^4.3.3
-  
-  # Permissions
   permission_handler: ^11.0.1
-  
-  # Audio
   record: ^5.1.0
   just_audio: ^0.9.36
-  
-  # File & Path
   file_picker: ^8.0.3
   path_provider: ^2.1.2
   connectivity_plus: ^6.0.0
@@ -55,20 +37,12 @@ dev_dependencies:
   flutter_lints: ^6.0.0
   flutter_launcher_icons: ^0.14.0
 
-# إعدادات الأيقونة
 flutter_launcher_icons:
   android: "launcher_icon"
   image_path: "assets/images/app_logo.png"
   min_sdk_android: 23
   adaptive_icon_background: "#1E88E5"
   adaptive_icon_foreground: "assets/images/app_logo.png"
-
-# تجميع كل التجاوزات بتنسيق دقيق ومُحاط بعلامات تنصيص
-dependency_overrides:
-  record_platform_interface: "1.2.0"
-  "androidx.browser:browser": "1.7.0"
-  "androidx.activity:activity": "1.8.0"
-  "androidx.core:core": "1.12.0"
 
 flutter:
   uses-material-design: true
