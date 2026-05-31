@@ -5,20 +5,28 @@ plugins {
 }
 
 android {
-    // 💡 هذا هو السطر السحري المطلوب لحل مشكلة الـ Namespace
-    // استبدل com.example.chatapp بمعرّف تطبيقك الفعلي إذا كان مختلفاً
-    namespace = "com.judeadaiy.chat_app"
+    // معرّف التطبيق الفريد
+    namespace = "com.example.chatapp"
 
-    compileSdk = 34 
+    // إصدار تجميع الأندرويد المطلوب من قبل الحزم الحديثة
+    compileSdk = 36 
+
+    // إصدار أدوات التطوير المحددة والمطلوبة في سجل البناء
+    ndkVersion = "28.2.13676358"
 
     defaultConfig {
-        // تأكد من وجود نفس المعرّف هنا أيضاً
+        // معرّف الحزمة للتطبيق
         applicationId = "com.example.chatapp"
         
-        targetSdk = 34
+        // الحد الأدنى لدعم نظام أندرويد (Android 5.0)
         minSdk = 23
         
-        // ... يمكنك ترك الـ versionCode والـ versionName كما هي لديك
+        // الإصدار المستهدف للتوافق مع الأنظمة الحديثة
+        targetSdk = 36
+        
+        // يمكنك إبقاء أرقام الإصدارات الافتراضية الخاصة بك هنا إذا رغبت
+        versionCode = 1
+        versionName = "1.0.0"
     }
 
     compileOptions {
@@ -35,5 +43,6 @@ android {
 }
 
 dependencies {
+    // مكتبة دعم الميزات الحديثة على إصدارات أندرويد القديمة
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
 }
