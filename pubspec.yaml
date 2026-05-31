@@ -66,9 +66,10 @@ flutter_launcher_icons:
 # تجميع كل التجاوزات في مكان واحد (مهم جداً)
 dependency_overrides:
   record_platform_interface: 1.2.0
-  androidx.browser:browser:1.7.0
-  androidx.activity:activity:1.8.0
-  androidx.core:core:1.12.0
+  androidx_browser: 1.7.0
+  androidx_activity: 1.8.0
+  androidx_core: 1.12.0
+
 
 flutter:
   uses-material-design: true
