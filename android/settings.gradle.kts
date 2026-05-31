@@ -23,10 +23,9 @@ pluginManagement {
 
 plugins {
     id("dev.flutter.flutter-plugin-loader") version "1.0.0"
-    // تثبيت إصدار التجميع المستقر والمدعوم كلياً داخل حاوية جيت هاب
     id("com.android.application") version "8.2.1" apply false
-    id("org.jetbrains.kotlin.android") version "1.9.0" apply false
+    // تغيير إصدار كوتلين ليتوافق 100% مع 8.2.1
+    id("org.jetbrains.kotlin.android") version "1.8.22" apply false
     id("dev.flutter.flutter-gradle-plugin") version "1.0.0" apply false
 }
-
 include(":app")
