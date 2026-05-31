@@ -12,46 +12,50 @@ dependencies:
   flutter_localizations:
     sdk: flutter
 
+  # State Management
   provider: ^6.1.2
-  supabase_flutter: ^2.5.0 # إصدار أقدم قليلاً وأكثر استقراراً
+
+  # Backend
+  supabase_flutter: ^2.5.0
   
+  # Firebase
   firebase_core: ^3.0.0
   firebase_messaging: ^15.0.0
   flutter_local_notifications: ^17.2.0
 
+  # UI & Theme
   google_fonts: ^6.2.1
   glassmorphism: ^3.0.0
   flutter_animate: ^4.5.0
 
-  image_picker: ^1.0.7 # نسخة متوافقة مع SDK 34
+  # Images & Files
+  image_picker: ^1.0.7
   cached_network_image: ^3.3.1
   
-    # عدلي سطر intl ليصبح هكذا تماماً:
+  # Utils
   intl: ^0.20.2
   timeago: ^3.5.0
   uuid: ^4.3.3
   
-  permission_handler: ^11.0.1 # نسخة مستقرة لـ 34
-  record: ^5.1.0 # نسخة لا تطلب إصدارات أندرويد حديثة جداً
+  # Permissions
+  permission_handler: ^11.0.1
+  
+  # Audio
+  record: ^5.1.0
   just_audio: ^0.9.36
   
+  # File & Path
   file_picker: ^8.0.3
   path_provider: ^2.1.2
   connectivity_plus: ^6.0.0
-
-# 🚨 الإبقاء على التجاوز الضروري
-dependency_overrides:
-  record_platform_interface: 1.2.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
-  
-  # توليد الأيقونة بكل المقاسات
   flutter_launcher_icons: ^0.14.0
 
-# إعدادات الأيقونة للأندرويد فقط وحذف الـ ios تماماً
+# إعدادات الأيقونة
 flutter_launcher_icons:
   android: "launcher_icon"
   image_path: "assets/images/app_logo.png"
@@ -59,14 +63,17 @@ flutter_launcher_icons:
   adaptive_icon_background: "#1E88E5"
   adaptive_icon_foreground: "assets/images/app_logo.png"
 
+# تجميع كل التجاوزات في مكان واحد (مهم جداً)
+dependency_overrides:
+  record_platform_interface: 1.2.0
+  androidx.browser:browser:1.7.0
+  androidx.activity:activity:1.8.0
+  androidx.core:core:1.12.0
+
 flutter:
   uses-material-design: true
-
-  # مسار الصور
   assets:
     - assets/images/app_logo.png
-
-  # مسارات الخطوط لضمان دمجها داخل الـ APK بنجاح
   fonts:
     - family: Cairo
       fonts:
@@ -75,8 +82,3 @@ flutter:
           weight: 700
         - asset: assets/fonts/Cairo-SemiBold.ttf
           weight: 600
-          
-dependency_overrides:
-  androidx.browser:browser:1.7.0
-  androidx.activity:activity:1.8.0
-  androidx.core:core:1.12.0
