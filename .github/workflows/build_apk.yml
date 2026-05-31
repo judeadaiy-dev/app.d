@@ -1,4 +1,4 @@
-name: Build APK Only
+name: Build APK
 
 on:
   push:
@@ -10,6 +10,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: false
       
       - uses: actions/setup-java@v4
         with:
@@ -20,15 +22,15 @@ jobs:
         with:
           channel: 'stable'
 
-      - name: Build Android Only
-        # هنا القوة: نحن نحدد البناء للأندرويد فقط ونمنع أي شيء آخر
+      - name: Build APK
         run: |
           flutter config --no-enable-web
           flutter pub get
-          flutter build apk --release --target-platform android-arm64 --no-tree-shake-icons
+          flutter build apk --release --target-platform android-arm64 --android-skip-build-dependency-validation
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: android-apk
-          path: build/app/outputs/flutter-apk/app-release.apk
+          name: final-apk
+          # نستخدم المسار العام للبحث عن أي ملف APK في مجلد البناء
+          path: build/**/outputs/flutter-apk/*.apk
