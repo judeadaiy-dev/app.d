@@ -23,16 +23,12 @@ jobs:
         with:
           channel: 'stable'
 
-      - name: Prepare and Build
+      - name: Build APK
         run: |
-          # تنظيف أي بقايا قديمة
-          flutter clean
-          # إعادة إنشاء هيكل الأندرويد لضمان التوافق
-          flutter create . 
-          # جلب المكتبات
+          flutter config --no-enable-web
           flutter pub get
-          # بناء التطبيق مع تجاوز التحقق من التبعيات
-          flutter build apk --debug --target-platform android-arm64 --android-skip-build-dependency-validation
+          flutter build apk --debug --target-platform android-arm64 --android-skip-build-dependency-validation -Pandroid.injected.build.sdk=36
+
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
